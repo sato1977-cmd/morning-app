@@ -1,0 +1,1878 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="朝の5分">
+<title>朝の5分チャレンジ</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { touch-action: manipulation; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: linear-gradient(135deg, #FFF5E8 0%, #FFE0EC 100%);
+    min-height: 100vh; color: #2C2C2A; padding: 12px;
+  }
+  .container {
+    max-width: 720px; margin: 12px auto 0; background: #FFFFFF;
+    border-radius: 24px; padding: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+  }
+  h1 { font-size: 26px; font-weight: 600; margin: 0 0 6px; text-align: center; }
+  .sub { font-size: 13px; color: #888780; text-align: center; margin: 0; }
+  .greeting { font-size: 13px; color: #D85A30; text-align: center; margin: 0 0 6px; font-weight: 500; }
+
+  .mode-select { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0 14px; }
+  .mode-card {
+    background: #F8F5F0; border: 2px solid transparent; border-radius: 14px;
+    padding: 14px; text-align: center; cursor: pointer; transition: all 0.15s;
+  }
+  .mode-card.selected { border-color: #FF8C5A; background: #FFF5E8; }
+  .mode-icon { font-size: 24px; margin: 0 0 4px; }
+  .mode-name { font-size: 14px; font-weight: 600; margin: 0 0 2px; }
+  .mode-desc { font-size: 11px; color: #888780; margin: 0; }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
+  .stat-card { background: #F8F5F0; border-radius: 14px; padding: 14px; text-align: center; }
+  .stat-label { font-size: 12px; color: #888780; margin: 0 0 4px; }
+  .stat-value { font-size: 22px; font-weight: 600; margin: 0; }
+
+  .bonus-info {
+    background: #FFF5E8; border: 1px solid #FFB88A; border-radius: 12px;
+    padding: 12px 14px; margin-bottom: 14px; font-size: 13px;
+    color: #5F4125; line-height: 1.6;
+  }
+  .bonus-info .big { font-size: 16px; font-weight: 600; color: #D85A30; }
+
+  .subject-box { background: #FFFAF3; border: 1px solid #F5E5D0; border-radius: 14px; padding: 14px; margin-bottom: 18px; }
+  .subject-title { font-size: 13px; font-weight: 600; margin: 0 0 8px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; }
+  .badge { font-size: 12px; padding: 4px 10px; border-radius: 999px; font-weight: 500; }
+  .b-math { background: #EEEDFE; color: #3C3489; }
+  .b-jp   { background: #E1F5EE; color: #085041; }
+  .b-kanji{ background: #FAECE7; color: #712B13; }
+  .b-sci  { background: #E6F1FB; color: #0C447C; }
+  .b-soc  { background: #FBEAF0; color: #72243E; }
+  .b-think { background: #FAEEDA; color: #633806; }
+
+  .primary-btn {
+    width: 100%; padding: 16px; font-size: 17px; font-weight: 600;
+    background: linear-gradient(135deg, #FF8C5A 0%, #FF6B9D 100%);
+    color: white; border: none; border-radius: 14px; cursor: pointer;
+    font-family: inherit; box-shadow: 0 4px 14px rgba(255,107,157,0.3);
+    transition: transform 0.1s;
+  }
+  .primary-btn:active { transform: scale(0.98); }
+
+  .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .q-meta { display: flex; align-items: center; gap: 8px; }
+  .q-num { font-size: 13px; color: #888780; font-weight: 500; }
+  .timer { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .progress-bar { background: #F0EDE5; height: 6px; border-radius: 3px; margin-bottom: 14px; overflow: hidden; }
+  .progress-fill { background: linear-gradient(90deg, #FF8C5A, #FF6B9D); height: 100%; width: 10%; transition: width 0.3s; }
+
+  .question-box { background: #FFFAF3; border-radius: 14px; padding: 18px 16px; margin-bottom: 12px; }
+  .question-text { font-size: 18px; line-height: 1.7; margin: 0; font-weight: 500; }
+  .question-text .hiragana {
+    color: #D85A30; font-size: 14px; font-weight: 500;
+    background: #FFE8D6; padding: 2px 8px; border-radius: 6px; margin: 0 2px;
+    display: inline-block;
+  }
+  .question-text .blank {
+    display: inline-block; min-width: 42px; text-align: center;
+    border-bottom: 2px solid #D85A30; color: #D85A30; font-weight: 600;
+    padding: 0 4px; margin: 0 2px;
+  }
+
+  /* くまさんキャラヒント */
+  .bear-hint-area {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 12px; padding: 12px;
+    background: linear-gradient(135deg, #FFF5E8 0%, #FFE8D6 100%);
+    border-radius: 14px; position: relative;
+  }
+  .bear-char {
+    width: 64px; height: 64px; cursor: pointer; flex-shrink: 0;
+    transition: transform 0.2s;
+    user-select: none;
+  }
+  .bear-char:active { transform: scale(0.92); }
+  .bear-char.disabled { opacity: 0.4; cursor: default; }
+  .bear-speech {
+    flex: 1; background: white; padding: 10px 14px;
+    border-radius: 12px; font-size: 14px; color: #5F4125;
+    position: relative; line-height: 1.5;
+    border: 1.5px solid #FFE0D0;
+  }
+  .bear-speech::before {
+    content: ''; position: absolute; left: -8px; top: 20px;
+    width: 0; height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid #FFE0D0;
+  }
+  .bear-speech::after {
+    content: ''; position: absolute; left: -6px; top: 20px;
+    width: 0; height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid white;
+  }
+  .bear-speech strong { color: #D85A30; }
+  .bear-speech .tap-hint { color: #888780; font-size: 12px; }
+  .bear-hint-detail {
+    background: #FFFAF3; border-left: 4px solid #FFB88A;
+    padding: 12px 14px; border-radius: 8px; font-size: 14px;
+    color: #5F4125; line-height: 1.6; margin-bottom: 12px; display: none;
+  }
+
+  /* 描画エリア */
+  .canvas-section {
+    background: #FDFCF8; border: 1.5px solid #F0EDE5;
+    border-radius: 14px; padding: 10px; margin-bottom: 12px;
+  }
+  .canvas-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .canvas-title { font-size: 12px; color: #888780; font-weight: 500; margin: 0; }
+  .canvas-tools { display: flex; gap: 6px; align-items: center; }
+  .tool-btn {
+    padding: 5px 10px; font-size: 11px; background: #FFFFFF;
+    border: 1px solid #E8E0D0; border-radius: 8px; cursor: pointer;
+    font-family: inherit; color: #5F5E5A;
+  }
+  .tool-btn:active { background: #F0EDE5; }
+  .tool-btn.active { background: #2C2C2A; color: white; border-color: #2C2C2A; }
+  .color-swatch {
+    width: 22px; height: 22px; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent;
+  }
+  .color-swatch.active { border-color: #2C2C2A; }
+  canvas {
+    display: block; width: 100%; height: 220px;
+    background:
+      linear-gradient(to right, #EFEAD8 1px, transparent 1px) 0 0/24px 24px,
+      linear-gradient(to bottom, #EFEAD8 1px, transparent 1px) 0 0/24px 24px,
+      #FFFEF9;
+    border-radius: 8px; touch-action: none; cursor: crosshair;
+  }
+
+  .choices { display: grid; gap: 8px; margin-bottom: 12px; }
+  .choice-btn {
+    padding: 14px 16px; text-align: left; font-size: 15px; background: #FFFFFF;
+    border: 1.5px solid #F0EDE5; border-radius: 12px; cursor: pointer;
+    font-family: inherit; transition: all 0.15s;
+  }
+  .choice-btn:hover:not(:disabled) { background: #FFFAF3; border-color: #E8E0D0; }
+  .choice-btn:disabled { cursor: default; }
+  .choice-correct { background: #E1F5EE !important; border-color: #1D9E75 !important; color: #085041; font-weight: 600; }
+  .choice-wrong   { background: #FCEBEB !important; border-color: #E24B4A !important; color: #A32D2D; }
+  .choice-dim     { opacity: 0.45; }
+
+  /* 入力式（算数用） */
+  .answer-input-row {
+    display: flex; gap: 8px; margin-bottom: 12px;
+  }
+  .answer-input {
+    flex: 1; padding: 14px 16px; font-size: 17px;
+    border: 1.5px solid #F0EDE5; border-radius: 12px;
+    font-family: inherit; font-weight: 500;
+    background: white; outline: none;
+  }
+  .answer-input:focus { border-color: #FF8C5A; }
+  .answer-submit {
+    padding: 0 20px; font-size: 15px; font-weight: 600;
+    background: #2C2C2A; color: white; border: none; border-radius: 12px;
+    cursor: pointer; font-family: inherit;
+  }
+  .answer-submit:active { opacity: 0.85; }
+
+  /* 漢字モード */
+  .kanji-reveal {
+    display: none; background: #FFFAF3; border: 2px solid #FFB88A;
+    border-radius: 14px; padding: 18px; margin-bottom: 12px;
+  }
+  .kanji-answer {
+    font-size: 64px; font-weight: 700; color: #D85A30;
+    text-align: center; margin: 8px 0 12px; letter-spacing: 8px;
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  }
+  .kanji-reading {
+    font-size: 14px; color: #5F4125; text-align: center; margin: 0 0 10px;
+  }
+  .kanji-reading .label { color: #888780; font-size: 12px; margin-right: 6px; }
+  .kanji-check-note {
+    font-size:13px; color:#888780; text-align:center; margin:8px 0 0;
+    line-height: 1.5;
+  }
+  .kanji-check {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px;
+  }
+  .kanji-btn {
+    padding: 14px; font-size: 15px; font-weight: 600;
+    border: none; border-radius: 10px; cursor: pointer; font-family: inherit;
+  }
+  .kanji-btn.correct { background: #1D9E75; color: white; }
+  .kanji-btn.wrong { background: #E24B4A; color: white; }
+  .kanji-btn:active { opacity: 0.85; }
+
+  .feedback { padding: 12px 14px; border-radius: 12px; margin-bottom: 12px; font-size: 14px; display: none; }
+  .fb-correct { background: #E1F5EE; color: #085041; }
+  .fb-wrong   { background: #FCEBEB; color: #A32D2D; }
+
+  .explanation {
+    display: none; background: #F5F3FE; border-left: 4px solid #7F77DD;
+    padding: 14px 16px; border-radius: 8px; margin-bottom: 12px;
+    font-size: 14px; line-height: 1.7; color: #2C2C2A;
+  }
+  .explanation h4 {
+    margin: 0 0 8px; font-size: 14px; color: #3C3489; font-weight: 600;
+  }
+  .explanation .formula {
+    background: #FFFFFF; padding: 8px 12px; border-radius: 6px;
+    margin: 8px 0; font-family: "SF Mono", Menlo, monospace; font-size: 13px;
+    color: #3C3489; white-space: pre-line;
+  }
+  .explanation .tip {
+    background: #FFF5E8; padding: 8px 12px; border-radius: 6px;
+    margin-top: 8px; font-size: 13px; color: #5F4125;
+  }
+
+  .reveal-btn {
+    width: 100%; padding: 12px; font-size: 15px; font-weight: 600;
+    background: #FFF5E8; color: #D85A30;
+    border: 2px solid #FFB88A; border-radius: 12px;
+    cursor: pointer; font-family: inherit; margin-bottom: 12px;
+  }
+  .reveal-btn:active { background: #FFE0D0; }
+
+  .next-btn {
+    width: 100%; padding: 14px; font-size: 15px; font-weight: 600;
+    background: #2C2C2A; color: white; border: none; border-radius: 12px;
+    cursor: pointer; font-family: inherit; display: none;
+  }
+
+  .result-emoji { font-size: 56px; margin: 0 0 8px; }
+  .result-title { font-size: 28px; font-weight: 600; margin: 0 0 6px; }
+  .result-msg { font-size: 14px; color: #888780; margin: 0 0 20px; }
+  .result-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .streak-box {
+    background: #FAEEDA; color: #633806; padding: 12px; border-radius: 12px;
+    margin-bottom: 14px; font-size: 14px; font-weight: 500; display: none;
+  }
+  .no-hint-box {
+    background: #E1F5EE; color: #085041; padding: 12px; border-radius: 12px;
+    margin-bottom: 14px; font-size: 14px; font-weight: 500; display: none;
+  }
+
+  .center { text-align: center; }
+  .screen { display: none; }
+  .active { display: block; }
+
+  /* ===== 貯金箱 ===== */
+  .piggy-card {
+    display: flex; align-items: center; gap: 14px;
+    background: linear-gradient(135deg, #FFE0EC 0%, #FFD0E0 100%);
+    border: 2px solid #FFB8D0;
+    border-radius: 18px; padding: 14px 16px; margin: 18px 0 10px;
+    box-shadow: 0 4px 12px rgba(255, 184, 208, 0.3);
+  }
+  .piggy-icon { font-size: 38px; line-height: 1; }
+  .piggy-info { flex: 1; }
+  .piggy-label { font-size: 11px; color: #88567A; margin: 0 0 2px; font-weight: 500; }
+  .piggy-amount { font-size: 28px; font-weight: 700; margin: 0; color: #C8326D; line-height: 1; }
+  .piggy-yen { font-size: 16px; margin-left: 2px; font-weight: 600; }
+  .piggy-points { font-size: 11px; color: #88567A; margin: 4px 0 0; }
+  .piggy-points span { font-weight: 600; color: #C8326D; }
+  .piggy-collect {
+    padding: 10px 14px; font-size: 13px; font-weight: 600;
+    background: white; color: #C8326D; border: 1.5px solid #FFB8D0;
+    border-radius: 10px; cursor: pointer; font-family: inherit;
+    white-space: nowrap;
+  }
+  .piggy-collect:active { background: #FFE0EC; }
+  .piggy-collect:disabled { opacity: 0.4; cursor: default; }
+
+  .streak-row {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .streak-pill {
+    font-size: 12px; padding: 5px 10px; border-radius: 999px;
+    background: #FFF5E8; color: #5F4125; font-weight: 500;
+  }
+
+  /* 受け取りモーダル */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    display: none; align-items: center; justify-content: center;
+    padding: 20px; z-index: 100;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal-card {
+    background: white; border-radius: 20px; padding: 24px;
+    max-width: 360px; width: 100%; text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .modal-icon { font-size: 48px; margin: 0 0 8px; }
+  .modal-title { font-size: 22px; font-weight: 600; margin: 0 0 6px; }
+  .modal-amount {
+    font-size: 36px; font-weight: 700; color: #C8326D;
+    margin: 12px 0; line-height: 1;
+  }
+  .modal-amount .yen { font-size: 22px; font-weight: 600; }
+  .modal-detail {
+    background: #FFF5E8; border-radius: 12px;
+    padding: 12px 14px; font-size: 13px; color: #5F4125;
+    line-height: 1.6; margin: 12px 0;
+  }
+  .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .modal-btn {
+    flex: 1; padding: 12px; font-size: 14px; font-weight: 600;
+    border: none; border-radius: 10px; cursor: pointer; font-family: inherit;
+  }
+  .modal-btn.primary { background: #2C2C2A; color: white; }
+  .modal-btn.cancel { background: #F0EDE5; color: #5F5E5A; }
+
+  /* 結果画面：今回の収入表示 */
+  .earnings-card {
+    background: linear-gradient(135deg, #FFF5E8 0%, #FFE0EC 100%);
+    border: 2px solid #FFB8D0;
+    border-radius: 14px; padding: 14px; margin: 0 0 14px;
+    text-align: center;
+  }
+  .earnings-label { font-size: 12px; color: #88567A; margin: 0 0 4px; }
+  .earnings-amount { font-size: 28px; font-weight: 700; color: #C8326D; margin: 0; }
+  .earnings-amount .yen { font-size: 18px; }
+  .earnings-bonus {
+    margin-top: 8px; font-size: 12px; color: #5F4125; line-height: 1.6;
+    text-align: left;
+  }
+  .earnings-bonus .item {
+    display: flex; justify-content: space-between; padding: 2px 0;
+  }
+  .earnings-bonus .item.bonus { color: #C8326D; font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- スタート画面 -->
+  <div id="start-screen" class="screen active">
+    <p class="greeting">☀️ おはよう、光里</p>
+    <h1>朝の5分チャレンジ</h1>
+    <p class="sub">くもん5年の総復習ドリルから出題</p>
+
+    <!-- 貯金箱 -->
+    <div class="piggy-card" id="piggy-card">
+      <div class="piggy-icon">🐷</div>
+      <div class="piggy-info">
+        <p class="piggy-label">ためているお金</p>
+        <p class="piggy-amount"><span id="piggy-amount">0</span><span class="piggy-yen">円</span></p>
+        <p class="piggy-points">未受け取り <span id="piggy-points">0</span> 点</p>
+      </div>
+      <button class="piggy-collect" id="piggy-collect">受け取る</button>
+    </div>
+
+    <div class="streak-row" id="streak-row" style="display:none;">
+      <span class="streak-pill" id="streak-pill">🔥 0日連続</span>
+      <span class="streak-pill" id="next-goal-pill" style="background:#FFE0EC;color:#C8326D;">🌱 あと3日で +30円</span>
+      <span class="streak-pill" id="total-pill">🏆 累計 0円</span>
+      <span class="streak-pill" id="month-pill">📅 今月あと 1000円</span>
+    </div>
+
+    <div class="mode-select">
+      <div class="mode-card selected" data-mode="mix">
+        <p class="mode-icon">🌈</p>
+        <p class="mode-name">ミックス</p>
+        <p class="mode-desc">算数＋国語＋他</p>
+      </div>
+      <div class="mode-card" data-mode="kanji">
+        <p class="mode-icon">✏️</p>
+        <p class="mode-name">漢字特訓</p>
+        <p class="mode-desc">書き取り10問</p>
+      </div>
+    </div>
+
+    <div class="bonus-info">
+      <span class="big">🐻 ヒントは3倍ルール</span><br>
+      くまさんヒントあり＝<strong>5点</strong>／ノーヒント＝<strong>15点</strong>
+      <br><br>
+      <span class="big">💰 1点 = 1円</span>　<span style="font-size:11px;color:#888780;">（月の上限 1,000円）</span>
+      <br>
+      <span style="font-size:13px;line-height:1.8;">
+      🌱 3日連続 +30円 / 🌿 5日連続 +50円 / 🌳 7日連続 +100円<br>
+      🎯 14日連続 +200円 / 👑 30日連続 +500円<br>
+      ✨ 全問正解 +100円 / 🔥 全問ノーヒント +100円
+      </span>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <p class="stat-label">問題数</p>
+        <p class="stat-value">10問</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">制限時間</p>
+        <p class="stat-value">5分</p>
+      </div>
+    </div>
+
+    <div class="subject-box">
+      <p class="subject-title" id="subject-title">今日の教科（5年生までの内容）</p>
+      <div class="badges" id="mode-badges">
+        <span class="badge b-math">算数</span>
+        <span class="badge b-jp">国語</span>
+        <span class="badge b-sci">理科</span>
+        <span class="badge b-soc">社会</span>
+      </div>
+    </div>
+
+    <button class="primary-btn" id="start-btn">スタート</button>
+  </div>
+
+  <!-- クイズ画面 -->
+  <div id="quiz-screen" class="screen">
+    <div class="quiz-header">
+      <div class="q-meta">
+        <span class="q-num" id="q-num">1 / 10</span>
+        <span class="badge" id="category">算数</span>
+      </div>
+      <span class="timer" id="timer">5:00</span>
+    </div>
+
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+    <div class="question-box">
+      <p class="question-text" id="question"></p>
+    </div>
+
+    <!-- くまさんヒント -->
+    <div class="bear-hint-area" id="bear-area">
+      <svg class="bear-char" id="bear-char" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <!-- 耳 -->
+        <circle cx="25" cy="28" r="12" fill="#B8722C"/>
+        <circle cx="25" cy="28" r="7" fill="#E8A866"/>
+        <circle cx="75" cy="28" r="12" fill="#B8722C"/>
+        <circle cx="75" cy="28" r="7" fill="#E8A866"/>
+        <!-- 顔 -->
+        <circle cx="50" cy="55" r="32" fill="#C88A3F"/>
+        <!-- 口の周り -->
+        <ellipse cx="50" cy="66" rx="18" ry="14" fill="#F5D9A8"/>
+        <!-- 目 -->
+        <circle cx="38" cy="50" r="3.5" fill="#2C1810"/>
+        <circle cx="62" cy="50" r="3.5" fill="#2C1810"/>
+        <circle cx="39" cy="49" r="1.2" fill="white"/>
+        <circle cx="63" cy="49" r="1.2" fill="white"/>
+        <!-- 鼻 -->
+        <ellipse cx="50" cy="60" rx="3.5" ry="2.5" fill="#2C1810"/>
+        <!-- 口 -->
+        <path d="M 45 68 Q 50 72 55 68" stroke="#2C1810" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <!-- ほっぺ -->
+        <circle cx="30" cy="62" r="4" fill="#FF9999" opacity="0.5"/>
+        <circle cx="70" cy="62" r="4" fill="#FF9999" opacity="0.5"/>
+      </svg>
+      <div class="bear-speech" id="bear-speech">
+        <strong>こまったら押してね！</strong><br>
+        <span class="tap-hint">（ヒントを使うと点数は5点。使わず正解は15点！）</span>
+      </div>
+    </div>
+    <div class="bear-hint-detail" id="bear-hint-detail"></div>
+
+    <!-- 描画エリア -->
+    <div class="canvas-section">
+      <div class="canvas-header">
+        <p class="canvas-title" id="canvas-title">✏️ 筆算・メモスペース</p>
+        <div class="canvas-tools">
+          <div class="color-swatch active" data-color="#2C2C2A" style="background:#2C2C2A;" title="黒"></div>
+          <div class="color-swatch" data-color="#D85A30" style="background:#D85A30;" title="赤"></div>
+          <div class="color-swatch" data-color="#185FA5" style="background:#185FA5;" title="青"></div>
+          <button class="tool-btn" id="eraser-btn">消しゴム</button>
+          <button class="tool-btn" id="clear-btn">全消し</button>
+        </div>
+      </div>
+      <canvas id="note-canvas"></canvas>
+    </div>
+
+    <!-- 回答エリア：選択肢 -->
+    <div class="choices" id="choices"></div>
+
+    <!-- 回答エリア：入力式（算数の計算問題用） -->
+    <div class="answer-input-row" id="input-row" style="display:none;">
+      <input type="text" class="answer-input" id="answer-input" inputmode="decimal" placeholder="こたえ" autocomplete="off">
+      <button class="answer-submit" id="answer-submit">こたえる</button>
+    </div>
+
+    <!-- 漢字：答えを見るボタン -->
+    <button class="reveal-btn" id="reveal-btn" style="display:none;">🔍 答えを見る（書けたら押してね）</button>
+
+    <!-- 漢字の答え表示 -->
+    <div class="kanji-reveal" id="kanji-reveal">
+      <p class="kanji-answer" id="kanji-answer"></p>
+      <p class="kanji-reading" id="kanji-reading"></p>
+      <p class="kanji-check-note">自分の書いた字と正解を見くらべてみよう</p>
+      <div class="kanji-check">
+        <button class="kanji-btn correct" id="kanji-correct">⭕ 書けた！</button>
+        <button class="kanji-btn wrong" id="kanji-wrong">❌ まちがえた</button>
+      </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+    <div class="explanation" id="explanation"></div>
+
+    <button class="next-btn" id="next-btn">つぎの問題へ</button>
+  </div>
+
+  <!-- 結果画面 -->
+  <div id="result-screen" class="screen center">
+    <p class="result-emoji" id="result-emoji">🌟</p>
+    <h1 class="result-title" id="result-title"></h1>
+    <p class="result-msg" id="result-msg"></p>
+
+    <!-- 今回の収入 -->
+    <div class="earnings-card">
+      <p class="earnings-label">きょうのおこづかい</p>
+      <p class="earnings-amount"><span id="earnings-amount">0</span><span class="yen">円</span></p>
+      <div class="earnings-bonus" id="earnings-bonus"></div>
+    </div>
+
+    <div class="result-stats">
+      <div class="stat-card">
+        <p class="stat-label">正解</p>
+        <p class="stat-value" id="correct-count">0</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">得点</p>
+        <p class="stat-value" id="score">0</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">タイム</p>
+        <p class="stat-value" id="time-taken">-</p>
+      </div>
+    </div>
+
+    <div class="no-hint-box" id="no-hint-box"></div>
+    <div class="streak-box" id="streak-display"></div>
+
+    <button class="primary-btn" id="restart-btn">もう一度チャレンジ</button>
+  </div>
+</div>
+
+<!-- 受け取りモーダル（containerの外） -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-icon" id="modal-icon">💰</div>
+    <h2 class="modal-title" id="modal-title">お金を受け取る？</h2>
+    <p class="modal-amount"><span id="modal-amount">0</span><span class="yen">円</span></p>
+    <div class="modal-detail" id="modal-detail"></div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" id="modal-cancel">キャンセル</button>
+      <button class="modal-btn primary" id="modal-confirm">うけとる！</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATS = {
+  '算数':'b-math','国語':'b-jp','漢字':'b-kanji','理科':'b-sci','社会':'b-soc','ひらめき':'b-think'
+};
+
+// ========= ミックス問題（くもんドリル5年の算数＋選択式） =========
+// 形式: type='choice' か 'input'
+// input は正解を answer 文字列、受け入れる別表記を altAnswers
+const MIX_BANK = [
+  // ===== 算数：整数と小数（1回）=====
+  {cat:'算数',topic:'10倍・100倍',type:'input',q:'4.15 を 10倍 した数は？',answer:'41.5',altAnswers:['41.50'],
+    hint1:'10倍すると、小数点は右に1つ動くよ',
+    hint2:'4.15 の小数点を右に1つ動かすと…',
+    exp:{title:'整数と小数のしくみ', body:'10倍すると小数点は右に1つ、100倍なら2つ、1000倍なら3つ右に動く。', formula:'4.15 × 10 = 41.5\n4.15 × 100 = 415\n4.15 × 1000 = 4150', tip:'「小数点が動く」と覚えるのが一番かんたん！'}},
+  {cat:'算数',topic:'10分の1',type:'input',q:'367.4 を 1000分の1 にした数は？',answer:'0.3674',
+    hint1:'1/1000にすると、小数点は左に3つ動くよ',
+    hint2:'367.4 の小数点を左に3つ動かす。数字がたりないときは「0.」を足そう',
+    exp:{title:'小数点の移動', body:'1/10で左に1つ、1/100で2つ、1/1000で3つ、小数点が左に動く。', formula:'367.4 ÷ 1000 = 0.3674', tip:'数字がたりないときは、前に「0」を足して動かす。'}},
+
+  // ===== 分数と小数（2回）=====
+  {cat:'算数',topic:'分数→小数',type:'input',q:'4/5 を小数で表すと？',answer:'0.8',
+    hint1:'分数は「わり算」と同じ意味。4÷5 を計算してみよう',
+    hint2:'4÷5 の筆算。4.0 ÷ 5 = ?',
+    exp:{title:'分数を小数にする', body:'分数は「分子÷分母」でわり算すれば小数になる。', formula:'4/5 = 4 ÷ 5 = 0.8', tip:'わり切れないときは四捨五入することもあるよ。'}},
+  {cat:'算数',topic:'小数→分数',type:'input',q:'0.39 を分数にすると？（分母は100）',answer:'39/100',altAnswers:['39/100'],
+    hint1:'0.39 は「100のうちの何個」と考えよう',
+    hint2:'小数第2位なので、分母は100。分子はそのままの数字',
+    exp:{title:'小数を分数にする', body:'小数第1位→分母10、第2位→分母100、第3位→分母1000。', formula:'0.39 = 39/100\n0.7 = 7/10\n1.23 = 123/100', tip:'約分できるなら約分しよう。'}},
+
+  // ===== 倍数と約数（3回）=====
+  {cat:'算数',topic:'最小公倍数',type:'input',q:'4 と 6 の最小公倍数は？',answer:'12',
+    hint1:'4の倍数と6の倍数を順に書いてみよう',
+    hint2:'4: 4,8,12,16... / 6: 6,12,18... 最初に出てくる共通の数は？',
+    exp:{title:'最小公倍数', body:'両方の倍数になっている一番小さい数。通分するときに大切。', formula:'4の倍数：4, 8, 12, 16, 20\n6の倍数：6, 12, 18, 24\n最小公倍数 = 12', tip:'公倍数の中で一番小さいのが最小公倍数。'}},
+  {cat:'算数',topic:'最大公約数',type:'input',q:'8 と 12 の最大公約数は？',answer:'4',
+    hint1:'8 も 12 も、同じ数でわり切れるのは？',
+    hint2:'8の約数: 1,2,4,8 / 12の約数: 1,2,3,4,6,12。共通で一番大きい数は？',
+    exp:{title:'最大公約数', body:'両方をわり切れる一番大きい数。約分するときに大切。', formula:'8の約数：1, 2, 4, 8\n12の約数：1, 2, 3, 4, 6, 12\n最大公約数 = 4', tip:'分数の約分は、分子と分母の最大公約数で両方を割る。'}},
+  {cat:'算数',topic:'偶数と奇数',type:'choice',q:'次のうち、偶数はどれ？',choices:['19','42','7','0と答えるか迷う'],answer:1,
+    hint1:'偶数は2でわり切れる数だよ',
+    hint2:'42 ÷ 2 = 21 でわり切れるね。ちなみに 0 も偶数（例外的に）',
+    exp:{title:'偶数と奇数', body:'偶数は2でわり切れる数（0, 2, 4, 6...）。奇数はわり切れない数（1, 3, 5, 7...）。0は偶数。', formula:'偶数：一の位が 0, 2, 4, 6, 8\n奇数：一の位が 1, 3, 5, 7, 9', tip:'「0は偶数」は覚えておこう！'}},
+
+  // ===== 分数（4回）=====
+  {cat:'算数',topic:'約分',type:'input',q:'18/45 を約分すると？（一番かんたんな分数で）',answer:'2/5',
+    hint1:'分子と分母の最大公約数を見つけよう',
+    hint2:'18と45の最大公約数は9。18÷9 = 2、45÷9 = 5',
+    exp:{title:'約分', body:'分子と分母を同じ数でわって、かんたんな分数にすること。最大公約数で一気にわるのがラク。', formula:'18/45 = (18÷9)/(45÷9) = 2/5', tip:'答えは必ず「これ以上わけられない」形にしよう。'}},
+  {cat:'算数',topic:'分数の大小',type:'choice',q:'3/4 と 3/5 では、どちらが大きい？',choices:['3/4が大きい','3/5が大きい','同じ','わからない'],answer:0,
+    hint1:'分子が同じとき、分母が小さいほうが大きくなるよ',
+    hint2:'ピザを4等分と5等分、3枚ずつ食べるならどっちが多い？',
+    exp:{title:'分数の大小', body:'分子が同じなら、分母が小さいほうが大きい（１つあたりが大きいから）。', formula:'3/4 > 3/5\n（4等分より5等分のほうが小さい）', tip:'通分すればかならず比べられる：3/4 = 15/20、3/5 = 12/20。'}},
+
+  // ===== 小数のかけ算（5回）=====
+  {cat:'算数',topic:'整数×小数',type:'input',q:'2 × 0.4 = ?',answer:'0.8',
+    hint1:'2 × 4 = 8 をまず計算しよう',
+    hint2:'0.4 は小数第1位。答えも小数点を1つ動かす',
+    exp:{title:'小数のかけ算', body:'かけ算してから、小数点以下の数だけ答えの小数点を動かす。', formula:'2 × 0.4\n→ 2 × 4 = 8\n→ 小数第1位だから 0.8', tip:'小数第◯位＋小数第◯位＝答えの小数点の位置。'}},
+  {cat:'算数',topic:'小数×小数',type:'input',q:'2.4 × 0.6 = ?',answer:'1.44',
+    hint1:'まず小数点を無視して 24 × 6 を計算',
+    hint2:'24 × 6 = 144。小数点は両方合わせて 1+1=2 つ左に動かす',
+    exp:{title:'小数×小数', body:'小数点を外して整数として計算 → 小数点以下の桁数の合計だけ答えの小数点を動かす。', formula:'2.4 × 0.6\n24 × 6 = 144\n小数点以下 1+1=2桁\n答え 1.44', tip:'筆算するときは、小数点は後から位置を決めるのがコツ。'}},
+
+  // ===== 小数のわり算（6回）=====
+  {cat:'算数',topic:'小数のわり算',type:'input',q:'4 ÷ 0.5 = ?',answer:'8',
+    hint1:'わる数とわられる数、両方を10倍すると計算しやすいよ',
+    hint2:'4 ÷ 0.5 → 40 ÷ 5 = ?',
+    exp:{title:'小数でわる計算', body:'わる数が小数のとき、両方に同じ数（10, 100...）をかけて、わる数を整数にしてから計算。', formula:'4 ÷ 0.5\n= 40 ÷ 5\n= 8', tip:'「小数点をずらす」と考えてOK。'}},
+
+  // ===== 分数のたし算ひき算（7回）=====
+  {cat:'算数',topic:'分数のたし算',type:'input',q:'2/9 + 1/3 = ?',answer:'5/9',
+    hint1:'分母がちがうから、まず通分だね',
+    hint2:'9と3の最小公倍数は9。1/3 = 3/9 に直そう',
+    exp:{title:'分母のちがう分数のたし算', body:'分母をそろえて（通分）から、分子だけたす。', formula:'2/9 + 1/3\n= 2/9 + 3/9\n= 5/9', tip:'通分できたら、あとは分子のたし算だけ。'}},
+  {cat:'算数',topic:'分数のひき算',type:'input',q:'1/4 − 1/8 = ?',answer:'1/8',
+    hint1:'分母を8にそろえよう',
+    hint2:'1/4 = 2/8。2/8 − 1/8 = ?',
+    exp:{title:'分母のちがう分数のひき算', body:'通分してから、分子だけひく。答えが約分できるならする。', formula:'1/4 − 1/8\n= 2/8 − 1/8\n= 1/8', tip:'通分→計算→約分、の順番で。'}},
+
+  // ===== 角の大きさ（8回）=====
+  {cat:'算数',topic:'三角形の角',type:'input',q:'三角形の3つの角の和は何度？',answer:'180',altAnswers:['180度','180°'],
+    hint1:'三角形の内角の和は、決まった数だよ',
+    hint2:'紙の三角形を切って3つの角を集めると、直線になる',
+    exp:{title:'三角形の内角の和', body:'どんな三角形でも、3つの角の和は必ず180°。', formula:'3つの角 ＝ 180°', tip:'これを使えば、2つの角がわかっていれば残りの1つも計算できる。'}},
+  {cat:'算数',topic:'四角形の角',type:'input',q:'四角形の4つの角の和は何度？',answer:'360',altAnswers:['360度','360°'],
+    hint1:'四角形は三角形2つに分けられる',
+    hint2:'三角形は180°。それが2つ分なので…',
+    exp:{title:'四角形の内角の和', body:'四角形は対角線で三角形2つに分けられる。180°×2 = 360°。', formula:'180° × 2 = 360°', tip:'多角形の内角の和は「(辺の数 − 2) × 180°」で求められる。'}},
+
+  // ===== 正多角形と円（9回）=====
+  {cat:'算数',topic:'正五角形の角',type:'input',q:'正五角形の1つの角の大きさは？（単位は度）',answer:'108',altAnswers:['108度','108°'],
+    hint1:'まず五角形の内角の和を求めよう',
+    hint2:'内角の和 = (5 − 2) × 180° = 540°。これを5つで等分',
+    exp:{title:'正多角形の1つの角', body:'正多角形は辺も角も全部等しい。内角の和を頂点の数で割ればOK。', formula:'(5 − 2) × 180° ÷ 5\n= 540° ÷ 5\n= 108°', tip:'正三角形60°、正方形90°、正五角形108°、正六角形120°。'}},
+  {cat:'算数',topic:'円周',type:'input',q:'半径3cmの円の円周は？（円周率3.14、単位はcm）',answer:'18.84',altAnswers:['18.84cm'],
+    hint1:'円周 = 直径 × 円周率',
+    hint2:'半径3cmなら直径は6cm。6 × 3.14 = ?',
+    exp:{title:'円周の求め方', body:'円周 = 直径 × 円周率（3.14）。半径の2倍が直径。', formula:'直径 = 3 × 2 = 6\n円周 = 6 × 3.14 = 18.84（cm）', tip:'円周率は「約3.14」。正確には3.14159...と無限に続く。'}},
+
+  // ===== 合同な図形（10回）=====
+  {cat:'算数',topic:'合同',type:'choice',q:'「合同な図形」とは？',choices:['同じ色の図形','ぴったり重なる図形','大きさが同じ図形','面積が同じ図形'],answer:1,
+    hint1:'ずらしたり回したり、ひっくり返したりしてみよう',
+    hint2:'動かしたらピッタリ重なる図形が合同',
+    exp:{title:'合同な図形', body:'形も大きさもまったく同じで、ぴったり重ねられる図形。ひっくり返してもOK。', formula:'合同な図形は、対応する辺の長さ・角の大きさも同じ', tip:'3辺が等しい／2辺と間の角が等しい／1辺と両端の角が等しい、なら合同。'}},
+
+  // ===== 体積（13回）=====
+  {cat:'算数',topic:'立方体の体積',type:'input',q:'1辺が3cmの立方体の体積は？（単位は㎤）',answer:'27',altAnswers:['27㎤','27cm3'],
+    hint1:'立方体の体積 = 1辺 × 1辺 × 1辺',
+    hint2:'3 × 3 × 3 = ?',
+    exp:{title:'立方体の体積', body:'立方体はたて・横・高さが全部同じ。「1辺の3乗」で求める。', formula:'3 × 3 × 3 = 27（㎤）', tip:'1L = 1000㎤、1㎥ = 1000000㎤ も覚えておくと便利。'}},
+  {cat:'算数',topic:'直方体の体積',type:'input',q:'たて5cm、横3cm、高さ2cmの直方体の体積は？（単位は㎤）',answer:'30',altAnswers:['30㎤','30cm3'],
+    hint1:'直方体の体積 = たて × 横 × 高さ',
+    hint2:'5 × 3 × 2 = ?',
+    exp:{title:'直方体の体積', body:'3つの辺の長さをかけ合わせれば体積になる。', formula:'5 × 3 × 2 = 30（㎤）', tip:'単位をそろえるのを忘れずに（cmで統一、mで統一、など）。'}},
+
+  // ===== 単位量あたり（14回）・平均 =====
+  {cat:'算数',topic:'平均',type:'input',q:'3人のテストの点数が 70, 80, 90 点。平均は何点？',answer:'80',altAnswers:['80点'],
+    hint1:'平均 = 合計 ÷ 人数',
+    hint2:'70 + 80 + 90 = 240。これを3でわる',
+    exp:{title:'平均の求め方', body:'平均 = 合計 ÷ 個数。ばらつきをならして代表の値にする。', formula:'(70 + 80 + 90) ÷ 3 = 240 ÷ 3 = 80（点）', tip:'身長や降水量の平均も同じ計算で求められる。'}},
+
+  // ===== 速さ（15回）=====
+  {cat:'算数',topic:'道のり',type:'input',q:'時速60kmの車が2.5時間で進む道のりは？（単位はkm）',answer:'150',altAnswers:['150km'],
+    hint1:'道のり = 速さ × 時間',
+    hint2:'60 × 2.5 = ?',
+    exp:{title:'速さ・時間・道のり', body:'「みはじ」の関係：道のり=速さ×時間、速さ=道のり÷時間、時間=道のり÷速さ。', formula:'60 × 2.5 = 150（km）', tip:'時速◯kmは「1時間で◯km進む」という意味。'}},
+  {cat:'算数',topic:'速さ',type:'input',q:'130kmを2時間で走った車の時速は？',answer:'65',altAnswers:['時速65km','65km'],
+    hint1:'速さ = 道のり ÷ 時間',
+    hint2:'130 ÷ 2 = ?',
+    exp:{title:'速さを求める', body:'速さは「1時間で進む距離」。道のりを時間でわる。', formula:'130 ÷ 2 = 65（時速65km）', tip:'秒速→分速→時速の変換も覚えよう。秒速1m = 時速3.6km。'}},
+
+  // ===== 割合 =====
+  {cat:'算数',topic:'割合',type:'input',q:'80個の15%はいくつ？',answer:'12',altAnswers:['12個'],
+    hint1:'% は100分の何、の意味。15% = 0.15',
+    hint2:'もとの数 × 割合 = くらべる数。80 × 0.15 = ?',
+    exp:{title:'割合', body:'「もとの数 × 割合 = くらべる数」が基本。%は小数にして計算。', formula:'80 × 0.15 = 12（個）', tip:'10%なら÷10、25%なら÷4、50%なら÷2でOK。'}},
+
+  // ===== 国語・慣用句・ことば =====
+  {cat:'国語',topic:'慣用句',type:'choice',q:'「頭が下がる」の意味は？',choices:['疲れて眠い','感心して尊敬する','反省している','お辞儀をする'],answer:1,
+    hint1:'体の動きをたとえに使った慣用句だよ',
+    hint2:'「頭を下げる」は相手を敬うしぐさ。自然に頭が下がる＝？',
+    exp:{title:'慣用句「頭が下がる」', body:'相手のりっぱな行動に、感心して尊敬する気持ちを表す言葉。', formula:'例：「毎日練習する兄には頭が下がる」', tip:'体を使った慣用句：「手をやく」「目を通す」「耳を貸す」など。'}},
+  {cat:'国語',topic:'対義語',type:'choice',q:'「縮小」の反対語は？',choices:['拡大','増加','発展','上昇'],answer:0,
+    hint1:'「縮む」の反対は？',
+    hint2:'小さく⇔大きく。漢字に「広がる」の意味があるもの',
+    exp:{title:'対義語', body:'「縮小」⇔「拡大」。どちらも大きさが変わることを表す。', formula:'縮小 ⇔ 拡大\n増加 ⇔ 減少\n発展 ⇔ 衰退', tip:'漢字の意味を考えよう。「縮」=ちぢむ、「拡」=ひろがる。'}},
+
+  // ===== 理科（5年：メダカ・ふりこ・電磁石） =====
+  {cat:'理科',topic:'メダカ',type:'choice',q:'メダカのオスとメスを見分けるポイントは？',choices:['体の色','ひれの形','目の大きさ','口の形'],answer:1,
+    hint1:'体のどこかの「ひれ」に違いがあるよ',
+    hint2:'背びれと尻びれの形がオスとメスでちがう',
+    exp:{title:'メダカの観察', body:'オスは背びれに切れ込みがあり、尻びれが平行四辺形。メスは背びれに切れ込みなし、尻びれは三角形。', formula:'オス：背びれ＝切れこみあり\nメス：背びれ＝切れこみなし', tip:'たまごは直径約1mm。10〜14日でふ化。'}},
+  {cat:'理科',topic:'ふりこ',type:'choice',q:'ふりこが1往復する時間は、何で変わる？',choices:['おもりの重さ','ふれはば','ひもの長さ','気温'],answer:2,
+    hint1:'実験で、変える条件は1つだけにするのがポイント',
+    hint2:'おもりの重さやふれはばを変えても、1往復の時間はほぼ同じ',
+    exp:{title:'ふりこのきまり', body:'1往復の時間は「ひもの長さ」だけで決まる。重さやふれはばは関係ない。', formula:'ひもが長い → 周期が長い\nひもが短い → 周期が短い', tip:'ガリレオ・ガリレイが発見したきまり。'}},
+  {cat:'理科',topic:'発芽',type:'choice',q:'植物の発芽に必要な3つの条件は？',choices:['水・空気・日光','水・空気・適度な温度','土・水・日光','水・土・温度'],answer:1,
+    hint1:'発芽には「日光」も「土」も必要ないよ',
+    hint2:'種が芽を出すのに必要なのは、水・空気・適度な温度',
+    exp:{title:'発芽の3条件', body:'発芽には「水・空気・適度な温度」。日光や肥料は成長のとき必要。', formula:'発芽：水 + 空気 + 適度な温度\n成長：上記 + 日光 + 肥料', tip:'スポンジ（土なし）でカイワレが発芽するのはこのため。'}},
+
+  // ===== 社会（5年：地理・工業） =====
+  {cat:'社会',topic:'湖',type:'choice',q:'日本でいちばん大きい湖は？',choices:['琵琶湖','霞ヶ浦','猪苗代湖','中禅寺湖'],answer:0,
+    hint1:'関西にある、とても有名な湖',
+    hint2:'滋賀県にある、古代湖',
+    exp:{title:'日本の地理（湖）', body:'琵琶湖は滋賀県にある日本最大の湖。面積約670㎢、京阪神の大切な水源。', formula:'1位：琵琶湖（滋賀）約670㎢\n2位：霞ヶ浦（茨城）約168㎢', tip:'琵琶湖は世界で3番目に古い湖。'}},
+  {cat:'社会',topic:'工業地帯',type:'choice',q:'日本で生産額が最も大きい工業地帯は？',choices:['京浜','中京','阪神','北九州'],answer:1,
+    hint1:'名古屋が中心。トヨタ自動車がある地域',
+    hint2:'愛知・岐阜・三重にまたがる工業地帯',
+    exp:{title:'日本の工業地帯', body:'中京工業地帯は日本最大。自動車・機械工業が中心。', formula:'四大工業地帯：\n中京（最大）・京浜・阪神・北九州', tip:'海ぞいの「太平洋ベルト」に工業が集中。'}},
+  {cat:'社会',topic:'米',type:'choice',q:'日本の米づくりが最もさかんな地方は？',choices:['関東地方','東北地方','九州地方','四国地方'],answer:1,
+    hint1:'寒さに強い品種が開発されている地方',
+    hint2:'秋田・新潟・山形など米どころが集中',
+    exp:{title:'日本の農業', body:'米の生産は東北・北陸が中心。水と広い平野が豊富。', formula:'米の生産上位：\n1位 新潟 / 2位 北海道 / 3位 秋田', tip:'コシヒカリ・あきたこまち・ひとめぼれなど。'}},
+
+  // ===== 算数：追加問題（整数と小数） =====
+  {cat:'算数',topic:'100倍',type:'input',q:'0.93 を 100倍 した数は？',answer:'93',
+    hint1:'100倍すると、小数点は右に2つ動くよ',
+    hint2:'0.93 → 9.3 → 93',
+    exp:{title:'100倍の計算', body:'100倍は小数点が右に2つ動く。', formula:'0.93 × 100 = 93', tip:'×10ごとに小数点が1つ右へ動くとおぼえよう。'}},
+  {cat:'算数',topic:'小数÷10',type:'input',q:'52.6 を 10分の1 にした数は？',answer:'5.26',
+    hint1:'1/10にすると、小数点は左に1つ動く',
+    hint2:'52.6 → 5.26',
+    exp:{title:'10分の1の計算', body:'小数点が左に1つ動く。', formula:'52.6 ÷ 10 = 5.26', tip:'÷10、÷100、÷1000のパターンで動く桁数が決まる。'}},
+  {cat:'算数',topic:'10倍',type:'input',q:'2.35 × 10 = ?',answer:'23.5',
+    hint1:'小数点が右に1つ移動',
+    hint2:'2.35 → 23.5',
+    exp:{title:'整数×10のしくみ', body:'小数×10は小数点が右へ1つ。', formula:'2.35 × 10 = 23.5', tip:'筆算しなくてOK、点を動かすだけ。'}},
+  {cat:'算数',topic:'1000で割る',type:'input',q:'63.5 ÷ 1000 = ?',answer:'0.0635',
+    hint1:'小数点が左に3つ動く。数字がたりないから「0.」を足そう',
+    hint2:'63.5 → 6.35 → 0.635 → 0.0635',
+    exp:{title:'÷1000の計算', body:'÷1000は小数点が左に3つ動く。たりない分は0で補う。', formula:'63.5 ÷ 1000 = 0.0635', tip:'左に動かすとき、桁がたりなかったら 0 を入れる。'}},
+
+  // ===== 算数：追加問題（分数と小数） =====
+  {cat:'算数',topic:'わり算を分数で',type:'input',q:'3 ÷ 4 を分数で表すと？',answer:'3/4',
+    hint1:'わり算の「わられる数／わる数」がそのまま分数',
+    hint2:'3 ÷ 4 = 3/4',
+    exp:{title:'わり算と分数', body:'わり算は分数で表せる。わられる数が分子、わる数が分母。', formula:'a ÷ b = a/b\n3 ÷ 4 = 3/4', tip:'逆に、分数は「分子 ÷ 分母」のわり算とも言える。'}},
+  {cat:'算数',topic:'分数→整数',type:'input',q:'14/2 を整数で表すと？',answer:'7',
+    hint1:'14 ÷ 2 を計算するだけ',
+    hint2:'14 ÷ 2 = 7',
+    exp:{title:'分数を整数で', body:'分子が分母でわり切れるとき、分数は整数で表せる。', formula:'14/2 = 14 ÷ 2 = 7', tip:'分子が分母の倍数なら、わり切れる。'}},
+  {cat:'算数',topic:'小数→分数',type:'input',q:'0.7 を分数で表すと？',answer:'7/10',
+    hint1:'小数第1位だから分母は10',
+    hint2:'0.7 = 7/10',
+    exp:{title:'小数を分数に', body:'小数第◯位なら、分母は10^◯。', formula:'0.7 = 7/10\n0.07 = 7/100\n0.007 = 7/1000', tip:'約分できるなら約分。0.5 = 5/10 = 1/2。'}},
+  {cat:'算数',topic:'分数→小数',type:'input',q:'3/4 を小数で表すと？',answer:'0.75',
+    hint1:'3 ÷ 4 の計算',
+    hint2:'3.00 ÷ 4 = 0.75',
+    exp:{title:'分数→小数', body:'分子÷分母で小数になる。', formula:'3/4 = 3 ÷ 4 = 0.75', tip:'よく出る分数：1/2=0.5、1/4=0.25、3/4=0.75、1/5=0.2。'}},
+
+  // ===== 算数：追加問題（倍数と約数） =====
+  {cat:'算数',topic:'倍数',type:'input',q:'3の倍数を小さい順に3つ書く（例：1,2,3）',answer:'3,6,9',altAnswers:['3、6、9','369','3 6 9'],
+    hint1:'3を1倍、2倍、3倍すると？',
+    hint2:'3×1=3、3×2=6、3×3=9',
+    exp:{title:'倍数', body:'ある数を整数倍した数。3の倍数は3, 6, 9, 12, 15...', formula:'3の倍数：3, 6, 9, 12, 15, 18...', tip:'倍数にその数自身が含まれる。'}},
+  {cat:'算数',topic:'公約数',type:'input',q:'9 と 18 の最大公約数は？',answer:'9',
+    hint1:'9も18も、どんな数でわり切れる？',
+    hint2:'18 ÷ 9 = 2 でわり切れる。9は9自身でもわり切れる',
+    exp:{title:'最大公約数', body:'両方をわり切れる最大の数。約分のときに使う。', formula:'9の約数：1, 3, 9\n18の約数：1, 2, 3, 6, 9, 18\n最大公約数 = 9', tip:'一方が他方の倍数なら、小さい方が最大公約数。'}},
+  {cat:'算数',topic:'最小公倍数',type:'input',q:'5 と 15 の最小公倍数は？',answer:'15',
+    hint1:'15は5の倍数でもある',
+    hint2:'一方が他方の倍数なら、大きい方が最小公倍数',
+    exp:{title:'最小公倍数（特殊ケース）', body:'一方が他方の倍数のとき、大きい方が最小公倍数。', formula:'5の倍数：5, 10, 15, 20...\n15の倍数：15, 30, 45...\n最小公倍数 = 15', tip:'倍数関係にある数の最小公倍数はすぐわかる。'}},
+
+  // ===== 算数：追加問題（分数） =====
+  {cat:'算数',topic:'通分',type:'input',q:'1/2 と 1/3 を通分すると？（答えは「○/○, ○/○」形式）',answer:'3/6,2/6',altAnswers:['3/6、2/6','3/6 2/6'],
+    hint1:'2と3の最小公倍数は6',
+    hint2:'1/2 = 3/6、1/3 = 2/6',
+    exp:{title:'通分', body:'分母をそろえること。最小公倍数に合わせるのが基本。', formula:'1/2 = 3/6\n1/3 = 2/6', tip:'分母にかけた数を、分子にも同じ数だけかける。'}},
+  {cat:'算数',topic:'約分',type:'input',q:'2/6 を約分すると？',answer:'1/3',
+    hint1:'2と6をわり切れる数でわる',
+    hint2:'2÷2=1、6÷2=3',
+    exp:{title:'約分', body:'分子と分母を同じ数でわって、かんたんな分数にする。', formula:'2/6 = (2÷2)/(6÷2) = 1/3', tip:'最大公約数でわれば一発。'}},
+  {cat:'算数',topic:'約分',type:'input',q:'9/15 を約分すると？',answer:'3/5',
+    hint1:'9と15の最大公約数は3',
+    hint2:'9÷3=3、15÷3=5',
+    exp:{title:'約分', body:'最大公約数でわるのが効率的。', formula:'9/15 = (9÷3)/(15÷3) = 3/5', tip:'3で両方わり切れることに気づけるかがポイント。'}},
+  {cat:'算数',topic:'時間と分数',type:'input',q:'15分は何時間？（分数で、約分して）',answer:'1/4',altAnswers:['1/4時間'],
+    hint1:'1時間は60分。15分は60分の何分の何？',
+    hint2:'15/60 を約分',
+    exp:{title:'時間を分数で', body:'1時間=60分。15分=15/60時間=1/4時間。', formula:'15/60 = 1/4（時間）', tip:'30分=1/2時間、20分=1/3時間、45分=3/4時間。'}},
+
+  // ===== 算数：追加問題（小数のかけ算） =====
+  {cat:'算数',topic:'整数×小数',type:'input',q:'60 × 0.3 = ?',answer:'18',
+    hint1:'60 × 3 = 180。答えは小数点を1つ動かす',
+    hint2:'180 → 18.0',
+    exp:{title:'整数×小数', body:'整数としてかけ算 → 小数点の位置を調整。', formula:'60 × 0.3\n= 60 × 3 ÷ 10\n= 180 ÷ 10\n= 18', tip:'×0.1=÷10と同じ。'}},
+  {cat:'算数',topic:'小数×小数',type:'input',q:'5.7 × 3.8 = ?',answer:'21.66',
+    hint1:'57 × 38 を計算して、最後に小数点を動かす',
+    hint2:'57 × 38 = 2166。小数点を2つ左へ',
+    exp:{title:'小数×小数（筆算）', body:'整数として計算 → 小数点以下の桁数の合計だけ動かす。', formula:'5.7 × 3.8\n57 × 38 = 2166\n小数2桁 → 21.66', tip:'5.7（1桁）＋3.8（1桁）＝合計2桁ぶん動かす。'}},
+  {cat:'算数',topic:'小数×小数',type:'input',q:'0.8 × 0.9 = ?',answer:'0.72',
+    hint1:'8 × 9 = 72。小数点は2つ左',
+    hint2:'72 → 0.72',
+    exp:{title:'1より小さい×1より小さい', body:'答えはもとの数より小さくなる。', formula:'0.8 × 0.9 = 0.72', tip:'1未満同士のかけ算は、答えも1未満になる。'}},
+
+  // ===== 算数：追加問題（小数のわり算） =====
+  {cat:'算数',topic:'整数÷小数',type:'input',q:'18 ÷ 0.3 = ?',answer:'60',
+    hint1:'両方に10倍して、180 ÷ 3 に変形',
+    hint2:'180 ÷ 3 = 60',
+    exp:{title:'小数でわる', body:'わる数を整数にするため、両方に同じ数をかける。', formula:'18 ÷ 0.3\n= 180 ÷ 3\n= 60', tip:'わる数の小数点を右にずらす→わられる数も同じだけずらす。'}},
+  {cat:'算数',topic:'小数÷小数',type:'input',q:'9.8 ÷ 1.4 = ?',answer:'7',
+    hint1:'両方に10倍して、98 ÷ 14',
+    hint2:'98 ÷ 14 = 7',
+    exp:{title:'小数÷小数', body:'両方を10倍して整数のわり算に。', formula:'9.8 ÷ 1.4 = 98 ÷ 14 = 7', tip:'わり切れるか、あまりが出るかは計算してみないとわからない。'}},
+  {cat:'算数',topic:'小数のわり算（商の大小）',type:'choice',q:'商が 9 より大きくなるのは？',choices:['9 ÷ 1.03','9 ÷ 0.8','9 ÷ 1','9 ÷ 2'],answer:1,
+    hint1:'1より小さい数でわると、商はもとの数より大きくなる',
+    hint2:'0.8 は1より小さい。9 ÷ 0.8 = 11.25',
+    exp:{title:'商とわる数の関係', body:'わる数が1より小さいと、商はもとの数より大きくなる。', formula:'9 ÷ 0.8 = 11.25（9より大きい）\n9 ÷ 1.03 = 8.7...（9より小さい）', tip:'÷（1未満）は「増える」、÷（1より大）は「減る」と覚えよう。'}},
+
+  // ===== 算数：追加問題（分数のたし算ひき算） =====
+  {cat:'算数',topic:'分数のたし算',type:'input',q:'1/18 + 1/6 = ?（約分して）',answer:'2/9',
+    hint1:'18と6の最小公倍数は18',
+    hint2:'1/18 + 3/18 = 4/18 = 2/9',
+    exp:{title:'分数のたし算→約分', body:'通分→たし算→約分の3ステップ。', formula:'1/18 + 1/6\n= 1/18 + 3/18\n= 4/18\n= 2/9', tip:'答えが約分できるかは、毎回チェック！'}},
+  {cat:'算数',topic:'分数のひき算',type:'input',q:'2/3 − 1/6 = ?',answer:'1/2',
+    hint1:'分母を6にそろえよう',
+    hint2:'2/3 = 4/6、4/6 − 1/6 = 3/6 = 1/2',
+    exp:{title:'分数のひき算', body:'通分→ひき算→約分。', formula:'2/3 − 1/6\n= 4/6 − 1/6\n= 3/6\n= 1/2', tip:'通分のあと、結果が約分できることが多い。'}},
+  {cat:'算数',topic:'3つの分数',type:'input',q:'1/3 + 1/4 + 1/8 = ?',answer:'17/24',
+    hint1:'3・4・8 の最小公倍数は24',
+    hint2:'1/3=8/24、1/4=6/24、1/8=3/24。合計は？',
+    exp:{title:'3つの分数のたし算', body:'全部の分母の最小公倍数で通分。', formula:'1/3 + 1/4 + 1/8\n= 8/24 + 6/24 + 3/24\n= 17/24', tip:'分母が3つになっても、考え方は同じ。'}},
+  {cat:'算数',topic:'分数と小数',type:'input',q:'1/5 + 0.3 = ?（小数で）',answer:'0.5',
+    hint1:'1/5 を小数に直すと？',
+    hint2:'1/5 = 0.2。0.2 + 0.3 = 0.5',
+    exp:{title:'分数と小数の混合', body:'どちらかにそろえて計算。小数にした方がラクなことが多い。', formula:'1/5 + 0.3 = 0.2 + 0.3 = 0.5', tip:'よく出る分数：1/2=0.5、1/4=0.25、1/5=0.2、1/8=0.125。'}},
+
+  // ===== 算数：追加問題（角の大きさ） =====
+  {cat:'算数',topic:'二等辺三角形',type:'input',q:'二等辺三角形で、頂角が 40°のとき、底角の1つは何度？',answer:'70',altAnswers:['70度','70°'],
+    hint1:'三角形の内角の和は180°。二等辺三角形は底角が等しい',
+    hint2:'(180 − 40) ÷ 2 = ?',
+    exp:{title:'二等辺三角形の角', body:'2つの底角が等しい。頂角がわかれば底角も求められる。', formula:'(180° − 40°) ÷ 2\n= 140° ÷ 2\n= 70°', tip:'二等辺＝2つの辺と2つの角が等しい。'}},
+  {cat:'算数',topic:'三角形の内角',type:'input',q:'三角形で、2つの角が 65°と 60°のとき、残りの角は？',answer:'55',altAnswers:['55度','55°'],
+    hint1:'3つの角の和は180°',
+    hint2:'180 − 65 − 60 = ?',
+    exp:{title:'三角形の残りの角', body:'内角の和180°から、既知の2つを引けば残りがわかる。', formula:'180° − 65° − 60° = 55°', tip:'三角形の角は、2つ決まれば残り1つは自動で決まる。'}},
+
+  // ===== 算数：追加問題（正多角形と円） =====
+  {cat:'算数',topic:'正六角形',type:'input',q:'正六角形の1つの角の大きさは？（単位は度）',answer:'120',altAnswers:['120度','120°'],
+    hint1:'内角の和 = (6 − 2) × 180°',
+    hint2:'720° ÷ 6 = ?',
+    exp:{title:'正六角形の内角', body:'正多角形の内角は(n-2)×180÷nで求まる。', formula:'(6 − 2) × 180° ÷ 6\n= 720° ÷ 6\n= 120°', tip:'蜂の巣は正六角形、効率的に空間を埋められる。'}},
+  {cat:'算数',topic:'円周率',type:'input',q:'円周の公式で、円周 = 直径 × ?',answer:'円周率',altAnswers:['3.14','π','円周率（3.14）'],
+    hint1:'「3.14...」と続く大切な数',
+    hint2:'「えんしゅうりつ」',
+    exp:{title:'円周率', body:'円周と直径の比。どんな大きさの円でも 約3.14。', formula:'円周 = 直径 × 円周率\n円周率 ≒ 3.14', tip:'円周率は「π（パイ）」とも書く。正確には無限に続く数。'}},
+  {cat:'算数',topic:'円周',type:'input',q:'直径8cmの円の円周は？（円周率3.14、単位はcm）',answer:'25.12',altAnswers:['25.12cm'],
+    hint1:'円周 = 直径 × 3.14',
+    hint2:'8 × 3.14 = ?',
+    exp:{title:'直径から円周', body:'直径がわかれば円周は「直径×3.14」ですぐ出る。', formula:'8 × 3.14 = 25.12（cm）', tip:'半径の2倍が直径。半径だけわかっているときは先に直径を求める。'}},
+
+  // ===== 算数：追加問題（体積） =====
+  {cat:'算数',topic:'体積の単位',type:'input',q:'1L（リットル）は何㎤？',answer:'1000',altAnswers:['1000㎤','1000cm3'],
+    hint1:'1L は 10cm × 10cm × 10cm の立方体と同じ',
+    hint2:'10 × 10 × 10 = ?',
+    exp:{title:'体積の単位換算', body:'1L = 1000㎤ = 1000ml。', formula:'1L = 10cm × 10cm × 10cm\n= 1000㎤', tip:'1㎥ = 1000L = 1000000㎤。'}},
+  {cat:'算数',topic:'体積の10倍',type:'input',q:'立方体の1辺を 10倍 すると、体積は何倍になる？',answer:'1000',altAnswers:['1000倍'],
+    hint1:'体積 = 1辺 × 1辺 × 1辺',
+    hint2:'10 × 10 × 10 = 1000',
+    exp:{title:'長さと体積の関係', body:'辺の長さが n倍になると、体積は n³ 倍になる。', formula:'1辺10倍 → 体積は10³=1000倍', tip:'同じ理屈で、辺が2倍なら体積は8倍（2³）。'}},
+  {cat:'算数',topic:'直方体の体積',type:'input',q:'たて6cm、横5cm、高さ3cmの直方体の体積は？（単位は㎤）',answer:'90',altAnswers:['90㎤'],
+    hint1:'たて × 横 × 高さ',
+    hint2:'6 × 5 × 3 = ?',
+    exp:{title:'直方体の体積', body:'3辺の長さをかけるだけ。', formula:'6 × 5 × 3 = 90（㎤）', tip:'立方体は直方体のなかまで、1辺の3乗。'}},
+
+  // ===== 算数：追加問題（単位量あたり・平均） =====
+  {cat:'算数',topic:'平均',type:'input',q:'4日間の勉強時間が 30・40・50・60分。平均は何分？',answer:'45',altAnswers:['45分'],
+    hint1:'合計 ÷ 日数',
+    hint2:'(30+40+50+60) ÷ 4',
+    exp:{title:'平均', body:'ばらついた数をならしたときの値。', formula:'(30+40+50+60) ÷ 4\n= 180 ÷ 4 = 45（分）', tip:'ばらつきが気になるデータも、平均なら代表値がわかる。'}},
+  {cat:'算数',topic:'単位量あたり',type:'input',q:'50㎡の畑で120kgのじゃがいもが取れた。1㎡あたり何kg？',answer:'2.4',altAnswers:['2.4kg'],
+    hint1:'取れた量 ÷ 面積',
+    hint2:'120 ÷ 50 = ?',
+    exp:{title:'単位量あたりの大きさ', body:'1つあたりの量を出すのは「わり算」。', formula:'120 ÷ 50 = 2.4（kg/㎡）', tip:'単位量あたりの比較で、どちらが多い／効率的かわかる。'}},
+  {cat:'算数',topic:'人口密度',type:'input',q:'面積100㎢で人口5000人の町の人口密度（1㎢あたり）は？',answer:'50',altAnswers:['50人'],
+    hint1:'人口 ÷ 面積',
+    hint2:'5000 ÷ 100',
+    exp:{title:'人口密度', body:'「1㎢あたり何人すんでいるか」を表す。こみぐあいの指標。', formula:'5000 ÷ 100 = 50（人/㎢）', tip:'東京23区は1㎢あたり約15000人。日本の平均は約340人。'}},
+
+  // ===== 算数：追加問題（速さ） =====
+  {cat:'算数',topic:'速さの単位',type:'input',q:'時速30km は分速何m？',answer:'500',altAnswers:['500m'],
+    hint1:'1時間=60分、1km=1000m',
+    hint2:'30km ÷ 60分 = 0.5km/分 = 500m/分',
+    exp:{title:'速さの単位変換', body:'時速→分速は÷60、km→mは×1000。', formula:'時速30km\n= 30000m/時\n= 30000÷60\n= 500m/分', tip:'秒速1m = 分速60m = 時速3.6km。'}},
+  {cat:'算数',topic:'時間',type:'input',q:'時速45kmの車が 135km 走るのにかかる時間は？',answer:'3',altAnswers:['3時間'],
+    hint1:'時間 = 道のり ÷ 速さ',
+    hint2:'135 ÷ 45 = ?',
+    exp:{title:'かかる時間', body:'道のりを速さでわると、かかる時間がわかる。', formula:'135 ÷ 45 = 3（時間）', tip:'「みはじ」の「じ（時間）」= み（道のり）÷ は（速さ）。'}},
+  {cat:'算数',topic:'分速→秒速',type:'input',q:'秒速32mのチーターが 256m 走るのにかかる時間は？',answer:'8',altAnswers:['8秒'],
+    hint1:'時間 = 道のり ÷ 速さ',
+    hint2:'256 ÷ 32 = ?',
+    exp:{title:'秒速での計算', body:'単位がそろっていれば、そのまま「÷」で時間が出る。', formula:'256 ÷ 32 = 8（秒）', tip:'チーターの最高速度は時速約100km（秒速28m）。'}},
+
+  // ===== 算数：追加問題（割合） =====
+  {cat:'算数',topic:'割合（求める）',type:'input',q:'20人のクラスで、眼鏡をかけているのが4人。割合は？（%で）',answer:'20',altAnswers:['20%'],
+    hint1:'割合 = くらべる数 ÷ もとの数',
+    hint2:'4 ÷ 20 = 0.2 = 20%',
+    exp:{title:'割合を求める', body:'小数にしたあと%にするには×100。', formula:'4 ÷ 20 = 0.2\n= 20%', tip:'×100して「%」、÷100して「小数」に行き来できる。'}},
+  {cat:'算数',topic:'割合（もとの数）',type:'input',q:'ある数の30%が60のとき、もとの数は？',answer:'200',
+    hint1:'もとの数 = くらべる数 ÷ 割合',
+    hint2:'60 ÷ 0.3 = ?',
+    exp:{title:'もとの数を求める', body:'割合とくらべる数がわかっていれば、÷でもとの数が出る。', formula:'60 ÷ 0.3 = 200', tip:'÷0.3 は ×(10/3) と同じ。'}},
+  {cat:'算数',topic:'百分率',type:'input',q:'0.75 を百分率（%）で表すと？',answer:'75',altAnswers:['75%'],
+    hint1:'小数を%にするには×100',
+    hint2:'0.75 × 100 = 75',
+    exp:{title:'百分率（%）', body:'小数 ×100 = %。%÷100 = 小数。', formula:'0.75 = 75%\n1.0 = 100%\n0.1 = 10%', tip:'「パーセント」は「per（〜あたり）cent（100）」の意味。'}},
+
+  // ===== 国語：追加問題 =====
+  {cat:'国語',topic:'慣用句',type:'choice',q:'「耳を貸す」の意味は？',choices:['聞こえない','話を聞く','大声で話す','耳を治療する'],answer:1,
+    hint1:'「貸す」はゆずる、受け入れるという意味',
+    hint2:'相手の話を聞いてあげること',
+    exp:{title:'慣用句「耳を貸す」', body:'相手の話を聞く、相談にのるという意味。', formula:'例：「友達の悩みに耳を貸す」', tip:'反対は「耳を貸さない」＝聞こうとしない。'}},
+  {cat:'国語',topic:'慣用句',type:'choice',q:'「手を焼く」の意味は？',choices:['料理上手','困って手に負えない','手を温める','手伝う'],answer:1,
+    hint1:'手が「焼けて」どうなる？',
+    hint2:'あつくて困る→手に負えない、うまく扱えない',
+    exp:{title:'慣用句「手を焼く」', body:'うまく扱えなくて困る、持て余すという意味。', formula:'例：「弟のいたずらに手を焼く」', tip:'体の部分を使った慣用句：頭・目・耳・手・足・口・鼻...たくさんある。'}},
+  {cat:'国語',topic:'対義語',type:'choice',q:'「原因」の反対語は？',choices:['結果','理由','発生','解決'],answer:0,
+    hint1:'何かが起きる「もと」と、起きた「あと」',
+    hint2:'「原因→結果」の流れ',
+    exp:{title:'対義語', body:'原因があって結果がある。ペアで覚える。', formula:'原因 ⇔ 結果\n質問 ⇔ 回答\n出発 ⇔ 到着', tip:'「げんいん」と「けっか」はよくセットで使われる。'}},
+  {cat:'国語',topic:'対義語',type:'choice',q:'「成功」の反対語は？',choices:['完成','失敗','上達','努力'],answer:1,
+    hint1:'うまくいく⇔？',
+    hint2:'「成」と「失」がペア',
+    exp:{title:'対義語「成功⇔失敗」', body:'「成功」はうまくいくこと、「失敗」はうまくいかないこと。', formula:'成功 ⇔ 失敗\n勝利 ⇔ 敗北', tip:'失敗は成功のもと、ということわざもあるね。'}},
+  {cat:'国語',topic:'四字熟語',type:'choice',q:'「一石二鳥」の意味は？',choices:['1つで2つの得','2回で1つ','石を2つ投げる','鳥が2羽'],answer:0,
+    hint1:'1つの石で、2羽の鳥を',
+    hint2:'1つの行動で2つの良いことを得ること',
+    exp:{title:'四字熟語「一石二鳥」', body:'1つのことで2つの利益を得ること。', formula:'例：「通学しながら運動にもなる、一石二鳥だ」', tip:'英語のことわざ「kill two birds with one stone」の直訳。'}},
+  {cat:'国語',topic:'四字熟語',type:'choice',q:'「温故知新」の意味は？',choices:['新しいものを作る','昔を学び新しいを知る','古い服を捨てる','最近のニュース'],answer:1,
+    hint1:'「温」はあたためる→よく学ぶ、「故」は古いこと',
+    hint2:'古いことを勉強して、新しい知識や考えを得ること',
+    exp:{title:'四字熟語「温故知新」', body:'昔のことを学び直して、新しい発見やヒントを得る。孔子の言葉。', formula:'温故（故きを温ね）知新（新しきを知る）', tip:'歴史の勉強が将来に役立つ、という考え方。'}},
+  {cat:'国語',topic:'ことわざ',type:'choice',q:'「急がば回れ」の意味は？',choices:['急ぐときは走る','急ぐときほど遠回りでも安全な道','回り道はだめ','早く回転する'],answer:1,
+    hint1:'急いでいるときこそ、どんな道を選ぶべき？',
+    hint2:'近道が危ないなら、安全な遠回りの方がかえって早い',
+    exp:{title:'ことわざ「急がば回れ」', body:'急ぐときほど、安全で確実な方法のほうが結果的に早い。', formula:'例：「テスト前こそ、遠回りでも基礎から復習しよう」', tip:'昔の琵琶湖の渡し舟（近道だけど危険）から生まれたことわざ。'}},
+  {cat:'国語',topic:'送りがな',type:'choice',q:'「あたたかい」を漢字と送りがなで正しく書くと？',choices:['温かい','温い','温たかい','温ぁかい'],answer:0,
+    hint1:'形容詞の送りがな',
+    hint2:'「温＋かい」で「あたたかい」',
+    exp:{title:'送りがな', body:'「温かい」は気温や気持ちがあたたかい。「温まる」「温める」など変化形にも注意。', formula:'温かい（あたたかい）\n温まる（あたたまる）\n温める（あたためる）', tip:'「暖かい」もあるけど、これは主に気温に使う。気持ちは「温かい」。'}},
+  {cat:'国語',topic:'熟字訓',type:'choice',q:'「今日」の読み方は？',choices:['いまにち','こんにち','きょう','きょうじつ'],answer:2,
+    hint1:'毎日使う言葉',
+    hint2:'「きょう」と読む熟字訓',
+    exp:{title:'熟字訓', body:'漢字2つ以上でひとかたまりの特別な読み方。', formula:'今日（きょう）\n昨日（きのう）\n明日（あした／あす）\n一日（ついたち）', tip:'覚えるしかないパターン。読書で出会って覚えていく。'}},
+  {cat:'国語',topic:'主語',type:'choice',q:'「夕日が赤く空を染める。」の主語はどれ？',choices:['夕日が','赤く','空を','染める'],answer:0,
+    hint1:'「何が・だれが」を答える部分',
+    hint2:'「〜が」がついている語を探す',
+    exp:{title:'主語と述語', body:'主語は「何が（だれが）」、述語は「どうする・どんなだ」。', formula:'夕日が（主語） 赤く（修飾語） 空を（修飾語） 染める（述語）', tip:'主語は省略されることもある。「ごはんを食べた」の主語は「わたしは」かも。'}},
+  {cat:'国語',topic:'部首',type:'choice',q:'「語」の部首は？',choices:['口','言','五','吾'],answer:1,
+    hint1:'左側の部分',
+    hint2:'「言葉」の「言」',
+    exp:{title:'漢字の部首', body:'部首は漢字のなかまわけのめじるし。「言へん」は言葉に関係する字。', formula:'言へんの漢字：語・話・読・詩・訳・試・計', tip:'部首がわかると、意味の推測や辞書引きが楽になる。'}},
+  {cat:'国語',topic:'類義語',type:'choice',q:'「うれしい」と似た意味の言葉は？',choices:['かなしい','たのしい','おどろく','こまる'],answer:1,
+    hint1:'プラスの感情で、「うれしい」に近いもの',
+    hint2:'「楽しい」',
+    exp:{title:'類義語', body:'似た意味の言葉。ニュアンスが少し違うことも。', formula:'うれしい ≒ 楽しい ≒ 喜ばしい\n悲しい ≒ さみしい ≒ つらい', tip:'完全に同じではなく、場面で使い分ける。'}},
+  {cat:'国語',topic:'敬語',type:'choice',q:'「言う」の尊敬語は？',choices:['もうす','おっしゃる','いただく','はいけんする'],answer:1,
+    hint1:'目上の人が「言う」ときに使う言葉',
+    hint2:'「先生がおっしゃる」と使う',
+    exp:{title:'敬語（尊敬語・けんじょう語）', body:'尊敬語は相手を高める言葉。けんじょう語は自分を低くする言葉。', formula:'言う：おっしゃる（尊敬）／もうす（けんじょう）\n食べる：めしあがる／いただく\n見る：ごらんになる／はいけんする', tip:'相手を尊敬するか、自分をへりくだるかで使い分け。'}},
+  {cat:'国語',topic:'漢字の組み立て',type:'choice',q:'「岩」はどう組み立てられている？',choices:['山＋石','岩＋木','石＋山','山＋岩'],answer:0,
+    hint1:'漢字を上下にわけてみよう',
+    hint2:'上が「山」、下が「石」',
+    exp:{title:'漢字の組み立て', body:'「岩」は山と石の組み合わせ。意味が見えてくる。', formula:'岩 = 山 + 石（山にある石）\n林 = 木 + 木\n森 = 木 + 木 + 木', tip:'合わせ方から意味を推測できるのが漢字の面白さ。'}},
+  {cat:'国語',topic:'漢字の読み',type:'choice',q:'「雑木林」の読み方は？',choices:['ざつきりん','ぞうきりん','ざつきばやし','ぞうきばやし'],answer:3,
+    hint1:'林は「はやし」と「りん」の2つの読みがある',
+    hint2:'「ぞうき」は「雑木」の特別な読み方',
+    exp:{title:'雑木林の読み', body:'いろいろな種類の木がまざった林。「ぞうきばやし」。', formula:'雑木林（ぞうきばやし）\n雑魚（ざこ）\n雑巾（ぞうきん）', tip:'「雑」は「ざつ」「ざっ」「ぞう」など複数の読みあり。'}},
+  {cat:'国語',topic:'音読み訓読み',type:'choice',q:'次のうち訓読みはどれ？',choices:['本（ホン）','花（はな）','学（ガク）','校（コウ）'],answer:1,
+    hint1:'日本固有の読みが訓読み',
+    hint2:'「はな」は日本語っぽい',
+    exp:{title:'音読みと訓読み', body:'音読みは中国伝来、訓読みは日本独自。訓読みは一文字で意味がわかる。', formula:'花：ハナ（訓）／カ（音・開花など）\n山：やま（訓）／サン（音・登山など）', tip:'ひとつの字で意味がピンとくれば訓読み。'}},
+  {cat:'国語',topic:'同音異義語',type:'choice',q:'「橋をかける」のかける、どの漢字？',choices:['掛ける','架ける','駆ける','欠ける'],answer:1,
+    hint1:'橋を「わたす」意味',
+    hint2:'「架橋（かきょう）」の「架」',
+    exp:{title:'同音異義語', body:'読みは同じで意味がちがう漢字。使い分けが大切。', formula:'橋を架ける（わたす）\n服を掛ける（つるす）\n走り駆ける（走る）\n皿が欠ける（こわれる）', tip:'文脈で正しい漢字を選ぶ。迷ったら辞書で意味を確認。'}},
+
+  // ===== 理科：追加問題 =====
+  {cat:'理科',topic:'種子の中身',type:'choice',q:'種子の中で、発芽したあと子葉になるのは？',choices:['胚軸','胚乳','子葉','幼根'],answer:2,
+    hint1:'発芽して最初に出てくる葉',
+    hint2:'種の中にすでに小さな葉のもとが入っている',
+    exp:{title:'種子のつくり', body:'種子には胚（はい）があり、そのなかに子葉・幼根（ようこん）・胚軸（はいじく）・胚乳（はいにゅう）がある。', formula:'子葉：最初に出る葉\n幼根：根になる部分\n胚乳：養分（お米など）', tip:'インゲン豆は無胚乳種子で、子葉に養分をためる。'}},
+  {cat:'理科',topic:'花のつくり',type:'choice',q:'花の中で、種子になる部分は？',choices:['おしべ','めしべの柱頭','めしべの子房','花びら'],answer:2,
+    hint1:'めしべの根元にある部分',
+    hint2:'花が咲いたあと、ふくらんで実になる',
+    exp:{title:'花のつくり', body:'めしべ＝柱頭・花柱・子房。子房の中に胚珠があり、受粉すると種子になる。', formula:'おしべ（花粉）→めしべの柱頭\n→受粉→子房がふくらむ→実に', tip:'イチゴのつぶつぶ、それぞれが1つの実（種子）。'}},
+  {cat:'理科',topic:'受粉',type:'choice',q:'植物が種子を作るために必要なことは？',choices:['光合成','受粉','発芽','呼吸'],answer:1,
+    hint1:'おしべの花粉が、めしべに着くこと',
+    hint2:'「じゅふん」',
+    exp:{title:'受粉', body:'おしべの花粉がめしべの柱頭につくこと。これが種子ができる第一歩。', formula:'花粉 → 柱頭 → 花粉管がのびる → 受精 → 種子に', tip:'風・虫・鳥・水などが花粉を運ぶ。'}},
+  {cat:'理科',topic:'天気',type:'choice',q:'雲が西から東へ動くのは何のせい？',choices:['自転','偏西風','地球の重力','太陽の熱'],answer:1,
+    hint1:'「へんせいふう」という風',
+    hint2:'日本の上空には西から東への強い風がふいている',
+    exp:{title:'偏西風と天気', body:'日本の上空には偏西風が吹いているため、雲は西から東へ動く。だから西の天気を見れば次がわかる。', formula:'西の天気 → 東に移動 → 日本の天気', tip:'台風も、日本付近では偏西風で東へカーブする。'}},
+  {cat:'理科',topic:'台風',type:'choice',q:'台風の中心に近い、風が弱く晴れている部分を何という？',choices:['台風の目','台風の心','雲の穴','中心核'],answer:0,
+    hint1:'人の顔で言うと中央にあるもの',
+    hint2:'「目」',
+    exp:{title:'台風の目', body:'台風の中心付近にある、雲がなく風が弱い部分。周囲はぐるぐる雲が渦を巻いている。', formula:'台風の構造：中心（目）→眼の壁（強風）→らせん状の雨雲', tip:'目の直径はふつう数十km。目の中にいると一時的に晴れる。'}},
+  {cat:'理科',topic:'電流と磁石',type:'choice',q:'電磁石のN極を反対にするには？',choices:['巻き数を増やす','電流の向きを変える','電池を増やす','鉄しんを変える'],answer:1,
+    hint1:'向きが決まるのは電流の向き',
+    hint2:'＋極と−極を入れかえる',
+    exp:{title:'電磁石のN極', body:'電流の向きでN極の位置が決まる。向きを変えるとN・Sが入れかわる。', formula:'電流の向き → N極の向き\n（右ねじの法則）', tip:'電池の向きを逆にするだけでN極が反対に。'}},
+  {cat:'理科',topic:'もののとけ方',type:'choice',q:'水にとけている物質は、どうなっている？',choices:['底に沈んでいる','上にうかんでいる','水全体に均等に広がっている','消えている'],answer:2,
+    hint1:'砂糖水をしばらくおいても甘さは上下で同じ',
+    hint2:'目に見えない小さな粒子が水全体に広がる',
+    exp:{title:'ものがとける', body:'とけたものは水全体に均等に散らばり、透明になる。', formula:'水 + 食塩 → 食塩水（とう明・均等）', tip:'見えなくなっても「なくなった」わけじゃない。'}},
+  {cat:'理科',topic:'水のじょうたい変化',type:'choice',q:'水が沸とうするのは何度？（1気圧のとき）',choices:['0℃','50℃','100℃','200℃'],answer:2,
+    hint1:'やかんでお湯がぼこぼこするときの温度',
+    hint2:'100℃',
+    exp:{title:'水の沸点と融点', body:'1気圧で水は0℃で氷に、100℃で湯気（水蒸気）に変わる。', formula:'融点（氷↔水）：0℃\n沸点（水↔水蒸気）：100℃', tip:'気圧が下がる高い山では、100℃より低い温度で沸とうする。'}},
+  {cat:'理科',topic:'星',type:'choice',q:'夜空で動かない星は？',choices:['金星','北極星','月','火星'],answer:1,
+    hint1:'地球の自転軸のほぼ真上にある',
+    hint2:'北の空で、周りの星はこの星を中心に回っているように見える',
+    exp:{title:'北極星', body:'地軸の延長上にあるため、地球が自転してもほぼ動かないように見える。北の方角の目印。', formula:'北斗七星から2倍のばすと見つかる', tip:'古代から方角の目印として使われてきた。'}},
+  {cat:'理科',topic:'月',type:'choice',q:'月が満ち欠けする理由は？',choices:['月が光らなくなる','地球の影','太陽の光の当たり方','雲がかかる'],answer:2,
+    hint1:'月は自分で光っているわけじゃない',
+    hint2:'月は太陽の光を反射している。当たる角度で見え方が変わる',
+    exp:{title:'月の満ち欠け', body:'月は太陽の光を反射して光る。地球から見る角度で、光って見える部分が変わる。', formula:'新月→三日月→半月→満月→半月→新月（約30日周期）', tip:'月食は地球の影、月の満ち欠けは光の当たり方。別のこと。'}},
+  {cat:'理科',topic:'メダカ',type:'choice',q:'メダカの受精卵は、ふ化までだいたい何日？',choices:['1〜2日','10〜14日','30日','3ヶ月'],answer:1,
+    hint1:'2週間ほど',
+    hint2:'水温によって多少変わる',
+    exp:{title:'メダカのふ化', body:'受精卵は10〜14日くらいで稚魚がふ化する。水温が高いほど早い。', formula:'25℃前後：約10日\n20℃前後：約14日', tip:'卵の中で心臓や目が動く様子が観察できる。'}},
+  {cat:'理科',topic:'水の流れ',type:'choice',q:'川の曲がったところで、流れが速いのは？',choices:['内側','外側','真ん中','同じ'],answer:1,
+    hint1:'コーナーを曲がる自動車も、外側のほうが長く動く',
+    hint2:'外側は流れが速く、侵食される',
+    exp:{title:'川の曲流', body:'曲がった川では、外側は流れが速く侵食され、内側はゆっくりで砂がたい積する。', formula:'外側：侵食（けずる）→がけ\n内側：たい積（つもる）→川原', tip:'長い時間でどんどん曲がりが大きくなり、三日月湖ができることも。'}},
+
+  // ===== 社会：追加問題 =====
+  {cat:'社会',topic:'地方',type:'choice',q:'大阪府は何地方？',choices:['中部地方','近畿地方','中国地方','関東地方'],answer:1,
+    hint1:'関西エリアの公式な名前',
+    hint2:'「きんき」地方',
+    exp:{title:'日本の地方区分', body:'日本は8地方に分かれる：北海道・東北・関東・中部・近畿・中国・四国・九州。', formula:'近畿地方：大阪・京都・兵庫・奈良・和歌山・三重・滋賀', tip:'「関西」と「近畿」はほぼ同じ範囲だが、近畿のほうが公式な呼び方。'}},
+  {cat:'社会',topic:'山脈',type:'choice',q:'日本アルプスと呼ばれる山脈は3つ。どれ？',choices:['北・中央・南アルプス','北海道・本州・四国','富士・白山・御岳','奥羽・中央・南'],answer:0,
+    hint1:'北から順に並ぶ',
+    hint2:'北アルプス（飛騨山脈）・中央アルプス（木曽山脈）・南アルプス（赤石山脈）',
+    exp:{title:'日本アルプス', body:'本州中部にある3つの大山脈の総称。3000m級の山が連なる。', formula:'北アルプス（飛騨）\n中央アルプス（木曽）\n南アルプス（赤石）', tip:'外国人が日本の山の美しさをアルプスにたとえたのが由来。'}},
+  {cat:'社会',topic:'川',type:'choice',q:'日本で最も長い川は？',choices:['利根川','信濃川','石狩川','木曽川'],answer:1,
+    hint1:'長野県・新潟県を流れる川',
+    hint2:'全長367km、新潟県では「しなのがわ」、長野県では「ちくまがわ」',
+    exp:{title:'日本の川', body:'日本最長は信濃川（367km）。流域面積最大は利根川。', formula:'長さ：1位信濃川 / 2位利根川 / 3位石狩川\n流域面積：1位利根川', tip:'日本の川は外国に比べて短くて急流。'}},
+  {cat:'社会',topic:'平野',type:'choice',q:'日本で最も広い平野は？',choices:['濃尾平野','越後平野','関東平野','石狩平野'],answer:2,
+    hint1:'東京を中心とする平野',
+    hint2:'1都6県にまたがる広大な平野',
+    exp:{title:'日本の平野', body:'関東平野は日本最大で、多くの人口がくらす。', formula:'1位 関東平野\n2位 石狩平野（北海道）\n3位 越後平野（新潟）', tip:'平野は農業・工業・都市が発達するところ。'}},
+  {cat:'社会',topic:'都道府県',type:'choice',q:'四国にある県はいくつ？',choices:['3県','4県','5県','6県'],answer:1,
+    hint1:'四国＝4つ',
+    hint2:'香川・愛媛・徳島・高知の4県',
+    exp:{title:'四国地方', body:'四国は4つの県：香川・愛媛・徳島・高知。', formula:'香川：讃岐うどん\n愛媛：みかん\n徳島：阿波おどり\n高知：坂本龍馬', tip:'「四国」の名前どおり、4つの県からなる。'}},
+  {cat:'社会',topic:'工業',type:'choice',q:'「太平洋ベルト」とは？',choices:['海岸の道路','工業地帯の連なり','鉄道網','火山列'],answer:1,
+    hint1:'関東から九州北部までつながる帯',
+    hint2:'工業地帯・地域が海ぞいに帯状に続く',
+    exp:{title:'太平洋ベルト', body:'日本の工業地帯・地域が太平洋側に連なる地域。', formula:'関東→京浜→中京→阪神→瀬戸内→北九州', tip:'海ぞい＝原料の輸入・製品の輸出に便利。'}},
+  {cat:'社会',topic:'農業',type:'choice',q:'野菜の近郊農業がさかんな理由は？',choices:['海が近い','大消費地に近い','雨が多い','土地が広い'],answer:1,
+    hint1:'新しいほうがおいしい野菜を運ぶなら？',
+    hint2:'大都市の周りなら、新鮮なまま届けられる',
+    exp:{title:'近郊農業', body:'大都市の近くで野菜を作ること。輸送距離が短く新鮮なまま届く。', formula:'東京近郊：千葉・茨城・埼玉\n大阪近郊：奈良・和歌山', tip:'遠くで作る「遠郊農業」と対になる考え方。'}},
+  {cat:'社会',topic:'水産業',type:'choice',q:'海で魚を育てて育つまで待つ漁業を何という？',choices:['遠洋漁業','沿岸漁業','養しょく業','栽培漁業'],answer:2,
+    hint1:'「ようしょく」',
+    hint2:'いけすなどで魚や貝を飼って育てる',
+    exp:{title:'日本の水産業', body:'魚をとる「漁業」と、育てる「養しょく業」がある。', formula:'漁業：遠洋・沖合・沿岸\n養しょく業：いけすで育てる\n栽培漁業：稚魚を育てて海にはなす', tip:'養しょく業は、マグロ・タイ・ブリ・ハマチなどで盛ん。'}},
+  {cat:'社会',topic:'貿易',type:'choice',q:'日本の最大の貿易相手国（近年）は？',choices:['アメリカ','中国','韓国','ドイツ'],answer:1,
+    hint1:'隣国で、人口14億人',
+    hint2:'近年は中国が1位',
+    exp:{title:'日本の貿易', body:'近年の日本の最大貿易相手国は中国。かつてはアメリカが1位だった時代もあった。', formula:'輸出先：中国・アメリカ・韓国\n輸入元：中国・アメリカ・オーストラリア', tip:'原油は中東、食料はアメリカ・オーストラリアから多く輸入。'}},
+  {cat:'社会',topic:'情報',type:'choice',q:'新聞・テレビ・ラジオ・インターネット。これらをまとめて何という？',choices:['マスメディア','広告業','アートメディア','データ通信'],answer:0,
+    hint1:'多くの人に情報を伝える手段',
+    hint2:'「マス（たくさん）＋メディア（手段）」',
+    exp:{title:'マスメディア', body:'大勢の人に情報を伝える手段。正しい情報を見分ける力（メディアリテラシー）が大切。', formula:'新聞・テレビ・ラジオ・雑誌・ネット', tip:'「だれが発信しているか」を確認するのが情報との正しいつきあい方。'}},
+  {cat:'社会',topic:'環境',type:'choice',q:'「リサイクル」の意味は？',choices:['ごみを減らす','くり返し使う','再生利用','全部ひとまとめ'],answer:2,
+    hint1:'「リ＝再」「サイクル＝循環」',
+    hint2:'使ったものを原料にもどして、また製品を作ること',
+    exp:{title:'3R', body:'環境を守るための3つの行動。', formula:'Reduce（ごみを減らす）\nReuse（くり返し使う）\nRecycle（再生利用）', tip:'ペットボトル→服にリサイクルされる例もある。'}},
+  {cat:'社会',topic:'公害',type:'choice',q:'四大公害病のうち、熊本県で起きたのは？',choices:['イタイイタイ病','水俣病','四日市ぜんそく','新潟水俣病'],answer:1,
+    hint1:'有機水銀が原因',
+    hint2:'熊本県水俣湾で発生',
+    exp:{title:'四大公害病', body:'高度経済成長期に起きた公害。いずれも企業の排水・排気が原因。', formula:'水俣病（熊本）：有機水銀\n新潟水俣病：有機水銀\nイタイイタイ病（富山）：カドミウム\n四日市ぜんそく（三重）：大気汚染', tip:'今は公害対策基本法などで規制されている。'}},
+  {cat:'社会',topic:'自然災害',type:'choice',q:'地震の大きさを表す、ゆれの強さのことを何という？',choices:['マグニチュード','震度','大きさ','規模'],answer:1,
+    hint1:'「しんど」',
+    hint2:'0〜7まである（5と6は強・弱に分かれる）',
+    exp:{title:'震度とマグニチュード', body:'震度はその場所のゆれの強さ、マグニチュードは地震そのもののエネルギーの大きさ。', formula:'震度：その場所のゆれ（0〜7）\nマグニチュード：地震自体のエネルギー', tip:'同じマグニチュードでも、震源から遠いと震度は小さくなる。'}}
+];
+
+// ========= 漢字特訓モード（くもんドリル「漢字の書き1〜3」全問収録） =========
+const KANJI_BANK = [
+  // 漢字の書き(1) ＝ ランダム配列プリント
+  {ex:'語{{く}}の意味を調べる。', ans:'句', read:'ク', mean:'「語句」＝ことばや短い文。「句読点」「俳句」なども。'},
+  {ex:'こしに刀を差した{{ぶ}}士。', ans:'武', read:'ブ', mean:'「武士」＝昔の日本の戦士。「武道」「武器」なども。'},
+  {ex:'サッカークラブに所{{ぞく}}する。', ans:'属', read:'ゾク', mean:'「所属」＝あるグループに入っていること。「金属」「属性」なども。'},
+  {ex:'{{じゅん}}番、よくならぶ。', ans:'順', read:'ジュン', mean:'「順番」＝ものごとの順序。「順位」「順調」なども。'},
+  {ex:'仲のよい夫{{ふ}}。', ans:'婦', read:'フ', mean:'「夫婦」＝夫と妻。「婦人」「主婦」など女の人を表す字。'},
+  {ex:'{{せい}}治家が演説する。', ans:'政', read:'セイ', mean:'「政治」＝国や町をおさめること。「政治家」は国会議員など。'},
+  {ex:'非常口の出入りを{{きん}}止する。', ans:'禁', read:'キン', mean:'「禁止」＝してはいけないと決めること。「禁煙」「禁句」なども。'},
+  {ex:'{{ざい}}校生と{{そつ}}業生。', ans:'在・卒', read:'ザイ ／ ソツ', mean:'「在校生」＝今通っている生徒。「卒業生」＝卒業した人。反対の関係。'},
+  {ex:'{{つみ}}をつぐなう。', ans:'罪', read:'つみ / ザイ', mean:'「罪」＝悪いこと、法律にそむくこと。「犯罪」「有罪」など。'},
+  {ex:'{{はん}}画を使った年賀状。', ans:'版', read:'ハン', mean:'「版画」＝木や金属にほって紙に写す絵。「出版」なども。'},
+  {ex:'遠足で{{べん}}当を食べる。', ans:'弁', read:'ベン', mean:'「弁当」＝持ち運びできる食事。外で食べるときに便利！'},
+  {ex:'くわしい説明を省{{りゃく}}する。', ans:'略', read:'リャク', mean:'「省略」＝かんたんにしてはぶくこと。「略図」「計略」なども。'},
+  {ex:'{{さん}}{{そ}}ボンベをつけて水中にもぐる。', ans:'酸・素', read:'サン ／ ソ', mean:'「酸素」＝空気中の気体。呼吸に必要。ダイビングで使う。'},
+  {ex:'高価な{{えき}}状のクリーム。', ans:'液', read:'エキ', mean:'「液状」＝液体の形。「液体」「液晶」なども。'},
+
+  // 漢字の書き(2)
+  {ex:'算数の{{おう}}用問題を解く。', ans:'応', read:'オウ', mean:'「応用」＝学んだことを別の場面に使うこと。「応援」「対応」なども。'},
+  {ex:'医{{し}}を目指す。', ans:'師', read:'シ', mean:'「医師」＝お医者さん。「教師」「美容師」など専門の仕事の人。'},
+  {ex:'布{{せい}}品を売る店。', ans:'製', read:'セイ', mean:'「布製品」＝布で作られたもの。「製品」「製造」なども。'},
+  {ex:'食物の{{ゆ}}入を{{せい}}限する。', ans:'輸・制', read:'ユ ／ セイ', mean:'「輸入」＝外国から運び入れること。「制限」＝ルールで限ること。'},
+  {ex:'週{{かん}}しを友達に{{か}}す。', ans:'刊・貸', read:'カン ／ か（す）', mean:'「週刊誌」＝毎週出る雑誌。「貸す」の反対は「借りる」。'},
+  {ex:'歴{{し}}的な文化{{ざい}}。', ans:'史・財', read:'シ ／ ザイ', mean:'「歴史」＝昔から今までのできごと。「文化財」＝大切な文化の宝物。'},
+  {ex:'情{{ほう}}が複{{ざつ}}に入り混じる。', ans:'報・雑', read:'ホウ ／ ザツ', mean:'「情報」＝知らせ。「複雑」＝こみ入っていること。'},
+  {ex:'失{{ぱい}}の原{{いん}}を考える。', ans:'敗・因', read:'ハイ ／ イン', mean:'「失敗」の反対は「成功」。「原因」の反対は「結果」。'},
+  {ex:'げき{{だん}}の公{{えん}}をみる。', ans:'団・演', read:'ダン ／ エン', mean:'「劇団」＝お芝居をする集まり。「公演」＝お客さんの前でやること。'},
+  {ex:'新{{かん}}線が停{{しゃ}}する。', ans:'幹・車', read:'カン ／ シャ', mean:'「新幹線」＝日本の高速鉄道。「停車」＝車や電車がとまること。'},
+  {ex:'事{{こ}}を調{{さ}}する。', ans:'故・査', read:'コ ／ サ', mean:'「事故」＝思いがけない悪いできごと。「調査」＝くわしく調べること。'},
+  {ex:'家族で先{{ぞ}}の{{はか}}参りに行く。', ans:'祖・墓', read:'ソ ／ はか', mean:'「先祖」＝前の代の家族。「お墓参り」＝亡くなった人を思い出すこと。'},
+  {ex:'低気{{あつ}}が発達する。', ans:'圧', read:'アツ', mean:'「気圧」＝空気の重さ。低気圧になると雨や風が強くなる。'},
+  {ex:'校{{しゃ}}のまどをふく。', ans:'舎', read:'シャ', mean:'「校舎」＝学校の建物。「舎」は「たてもの」。「寄宿舎」なども。'},
+
+  // 漢字の書き(3)
+  {ex:'理科でしん察を受ける。', ans:'眼', read:'ガン', mean:'「眼科」＝目のお医者さん。「眼」は「目」という意味。', altQ:'{{がん}}科でしん察を受ける。'},
+  {ex:'正{{ぎ}}感が強い人。', ans:'義', read:'ギ', mean:'「正義感」＝正しいことを大事にする気持ち。「義務」「義理」なども。'},
+  {ex:'星に{{きょう}}味がある。', ans:'興', read:'キョウ', mean:'「興味」＝心をひかれること。「興奮」「復興」なども。'},
+  {ex:'防{{さい}}訓練を行う。', ans:'災', read:'サイ', mean:'「防災」＝災害をふせぐこと。「火災」「災難」なども。'},
+  {ex:'国{{さい}}的に有名な選手。', ans:'際', read:'サイ', mean:'「国際」＝国と国の間。「国際的」は世界でのこと。'},
+  {ex:'炭{{さん}}飲料を飲む。', ans:'酸', read:'サン', mean:'「炭酸」＝あわの出る飲み物の成分。「酸素」「酸性」なども。'},
+  {ex:'お寺のお{{どう}}をそうじする。', ans:'堂', read:'ドウ', mean:'「お堂」＝仏さまをまつる建物。「講堂」「食堂」なども。'},
+
+  // ===== 追加：漢字の書き・読み =====
+  {ex:'大学で学問をお{{さ}}める。', ans:'修', read:'シュウ／おさ（める）', mean:'「修める」＝学んで身につけること。「修学」「修行」なども。'},
+  {ex:'計算の答えを{{たし}}かめる。', ans:'確', read:'カク／たし（か）', mean:'「確かめる」＝正しいかどうかチェックすること。「確認」「確実」なども。'},
+  {ex:'先生が生徒を{{みちび}}く。', ans:'導', read:'ドウ／みちび（く）', mean:'「導く」＝先頭に立って案内する。「指導」「導入」なども。'},
+  {ex:'庭を{{さ}}いてかこむ。', ans:'割', read:'カツ／わ（る）・さ（く）', mean:'「割く」＝わけること・切りわけること。「分割」「割合」なども。'},
+  {ex:'うらの畑を{{たがや}}す。', ans:'耕', read:'コウ／たがや（す）', mean:'「耕す」＝畑をすきで掘り返す。「農耕」なども。'},
+  {ex:'ゆう勝を{{よろこ}}ぶ。', ans:'喜', read:'キ／よろこ（ぶ）', mean:'「喜ぶ」＝うれしく思うこと。「喜び」「歓喜」など。'},
+  {ex:'絵を見る目が{{こ}}える。', ans:'肥', read:'ヒ／こ（える）', mean:'「目が肥える」＝見る目が上達すること。「肥料」「肥満」なども。'},
+  {ex:'ふたたび走り{{はじ}}める。', ans:'始', read:'シ／はじ（める）', mean:'「始める」＝スタートすること。「開始」「始業」なども。'},
+  {ex:'とつ然ねこが{{あらわ}}れる。', ans:'現', read:'ゲン／あらわ（れる）', mean:'「現れる」＝姿を見せる。「出現」「表現」なども。'},
+  {ex:'手の大きさを{{くら}}べる。', ans:'比', read:'ヒ／くら（べる）', mean:'「比べる」＝ならべて違いを見る。「比例」「比較」なども。'},
+  {ex:'いきおいよく球を{{な}}げる。', ans:'投', read:'トウ／な（げる）', mean:'「投げる」＝放り出す。「投手」「投票」なども。'},
+  {ex:'べんご{{し}}をこころざす。', ans:'士', read:'シ', mean:'「弁護士」＝法律の専門家。「武士」「紳士」など職業・身分を表す字。'},
+
+  // ===== 読み問題（よく出る難読・特別読み） =====
+  {ex:'「河原」のひらがな読みは？（ヒント：「かわら」または別の読み）', ans:'かわら', read:'かわら（熟字訓）', mean:'川の岸で、石や砂のある場所。「河原」「川原」どちらも「かわら」と読む。', altQ:'「河原」の読みは？'},
+  {ex:'「眼鏡」の読みは？', ans:'めがね', read:'めがね（熟字訓）', mean:'視力を補う道具。「眼鏡」は熟字訓でまとめて「めがね」。'},
+  {ex:'「清水」の読みは？（人の名字にもある）', ans:'しみず', read:'しみず（熟字訓）', mean:'きれいな水、わき水のこと。「清水寺」（京都）も有名。'},
+  {ex:'「迷子」の読みは？', ans:'まいご', read:'まいご', mean:'道に迷った子ども。「迷子」は「まいご」。'},
+  {ex:'「百貨店」の読みは？', ans:'ひゃっかてん', read:'ヒャッカテン', mean:'多くの商品を売る大きな店。デパートのこと。'}
+];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const TOTAL = 10;
+const POINTS_HINT = 5;
+const POINTS_NO_HINT = 15;
+
+// ===== お小遣いシステム =====
+const YEN_PER_POINT = 1;         // 1点 = 1円（シンプルでわかりやすく）
+const MONTHLY_LIMIT_YEN = 1000;  // 月の上限（1000円）
+const BONUS_PERFECT = 100;       // 全問正解
+const BONUS_NO_HINT_ALL = 100;   // 全問ノーヒント正解
+// 連続日数ボーナス（段階的）
+const STREAK_BONUSES = [
+  { days: 3,  pts: 30,  emoji: '🌱', label: '3日連続！' },
+  { days: 5,  pts: 50,  emoji: '🌿', label: '5日連続！' },
+  { days: 7,  pts: 100, emoji: '🌳', label: '1週間達成！' },
+  { days: 14, pts: 200, emoji: '🎯', label: '2週間達成！' },
+  { days: 30, pts: 500, emoji: '👑', label: '1ヶ月達成！' }
+];
+const STORAGE_KEY = 'hikari_morning_5min_v2';
+
+function loadSavings() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultSavings();
+    const data = JSON.parse(raw);
+    return Object.assign(defaultSavings(), data);
+  } catch (e) {
+    return defaultSavings();
+  }
+}
+function defaultSavings() {
+  return {
+    pendingPoints: 0,         // まだ受け取っていない点数
+    totalYen: 0,              // 累計受け取った金額
+    lastPlayDate: null,       // 最後にプレイした日
+    consecutiveDays: 0,       // 連続日数
+    achievedStreaks: [],      // 達成済みの連続日数（重複防止）
+    monthYearKey: null,       // 当月キー（YYYY-MM）
+    monthEarnedYen: 0,        // 当月の収入合計
+    history: []
+  };
+}
+function saveSavings(s) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+  catch (e) { console.error('保存に失敗', e); }
+}
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function yesterdayStr() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function thisMonthKey() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+function pointsToYen(pts) { return Math.floor(pts * YEN_PER_POINT); }
+
+// 次に達成できる連続日数を返す
+function getNextStreakGoal(currentDays) {
+  for (const b of STREAK_BONUSES) {
+    if (b.days > currentDays) return b;
+  }
+  return null; // 全部達成済み
+}
+
+// 貯金箱表示を更新
+function updatePiggyDisplay() {
+  const s = loadSavings();
+  // 月跨ぎチェック
+  if (s.monthYearKey !== thisMonthKey()) {
+    s.monthYearKey = thisMonthKey();
+    s.monthEarnedYen = 0;
+    saveSavings(s);
+  }
+  $('piggy-amount').textContent = pointsToYen(s.pendingPoints).toLocaleString();
+  $('piggy-points').textContent = s.pendingPoints;
+  $('piggy-collect').disabled = s.pendingPoints === 0;
+
+  // 連続日数 & 次の目標
+  const next = getNextStreakGoal(s.consecutiveDays);
+  $('streak-row').style.display = 'flex';
+  $('streak-pill').textContent = '🔥 ' + s.consecutiveDays + '日連続';
+  $('total-pill').textContent = '🏆 累計 ' + s.totalYen.toLocaleString() + '円';
+
+  // 次の目標表示
+  if (next) {
+    const remaining = next.days - s.consecutiveDays;
+    $('next-goal-pill').style.display = 'inline-block';
+    $('next-goal-pill').textContent = next.emoji + ' あと' + remaining + '日で +' + next.pts + '円';
+  } else {
+    $('next-goal-pill').style.display = 'none';
+  }
+
+  // 月間上限の表示
+  const monthRemaining = Math.max(0, MONTHLY_LIMIT_YEN - s.monthEarnedYen);
+  $('month-pill').style.display = 'inline-block';
+  if (monthRemaining > 0) {
+    $('month-pill').textContent = '📅 今月あと ' + monthRemaining.toLocaleString() + '円';
+    $('month-pill').style.background = '#FFF5E8';
+    $('month-pill').style.color = '#5F4125';
+  } else {
+    $('month-pill').textContent = '📅 今月の上限到達！';
+    $('month-pill').style.background = '#E1F5EE';
+    $('month-pill').style.color = '#085041';
+  }
+}
+
+let mode = 'mix';
+let questions = [], idx = 0, correct = 0, score = 0, streak = 0, maxStreak = 0;
+let noHintCount = 0;
+let timeLeft = 300, timer = null, answered = false;
+let usedHint = false;
+
+const $ = id => document.getElementById(id);
+
+function showScreen(name) {
+  ['start-screen','quiz-screen','result-screen'].forEach(s => $(s).classList.remove('active'));
+  $(name).classList.add('active');
+}
+
+// モード選択
+document.querySelectorAll('.mode-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    mode = card.dataset.mode;
+    if (mode === 'kanji') {
+      $('subject-title').textContent = '漢字書き取り（くもんドリルから）';
+      $('mode-badges').innerHTML = '<span class="badge b-kanji">5年生の漢字</span><span class="badge" style="background:#F0EDE5;color:#5F5E5A;">書き取り練習</span>';
+    } else {
+      $('subject-title').textContent = '今日の教科（5年生までの内容）';
+      $('mode-badges').innerHTML = '<span class="badge b-math">算数</span><span class="badge b-jp">国語</span><span class="badge b-sci">理科</span><span class="badge b-soc">社会</span>';
+    }
+  });
+});
+
+function start() {
+  if (mode === 'kanji') {
+    questions = shuffle(KANJI_BANK).slice(0, TOTAL);
+  } else {
+    const byCat = {};
+    MIX_BANK.forEach(q => {
+      if (!byCat[q.cat]) byCat[q.cat] = [];
+      byCat[q.cat].push(q);
+    });
+    const pick = (cat, n) => shuffle(byCat[cat] || []).slice(0, n);
+    questions = [
+      ...pick('算数', 4),
+      ...pick('国語', 2),
+      ...pick('理科', 2),
+      ...pick('社会', 2)
+    ];
+    questions = shuffle(questions).slice(0, TOTAL);
+  }
+
+  idx = 0; correct = 0; score = 0; streak = 0; maxStreak = 0;
+  noHintCount = 0; timeLeft = 300;
+  $('timer').style.color = '';
+  showScreen('quiz-screen');
+
+  if (timer) clearInterval(timer);
+  timer = setInterval(() => {
+    timeLeft--;
+    const m = Math.floor(timeLeft / 60);
+    const s = timeLeft % 60;
+    $('timer').textContent = m + ':' + String(s).padStart(2, '0');
+    if (timeLeft <= 30) $('timer').style.color = '#A32D2D';
+    if (timeLeft <= 0) { clearInterval(timer); end(); }
+  }, 1000);
+  show();
+}
+
+function show() {
+  answered = false;
+  usedHint = false;
+  const q = questions[idx];
+  $('q-num').textContent = (idx + 1) + ' / ' + TOTAL;
+
+  if (mode === 'kanji') {
+    showKanji(q);
+  } else {
+    showMix(q);
+  }
+
+  $('progress').style.width = (idx / TOTAL * 100) + '%';
+  $('feedback').style.display = 'none';
+  $('explanation').style.display = 'none';
+  $('next-btn').style.display = 'none';
+  clearCanvas();
+}
+
+function resetBear() {
+  $('bear-char').classList.remove('disabled');
+  $('bear-speech').innerHTML = '<strong>こまったら押してね！</strong><br><span class="tap-hint">（ヒントなし正解は3倍ボーナス🔥）</span>';
+  $('bear-hint-detail').style.display = 'none';
+  $('bear-area').style.display = 'flex';
+}
+
+function showMix(q) {
+  const catEl = $('category');
+  catEl.textContent = q.cat;
+  catEl.className = 'badge ' + CATS[q.cat];
+  $('question').textContent = q.q;
+  $('canvas-title').textContent = '✏️ 筆算・メモスペース';
+
+  resetBear();
+
+  // 選択式 or 入力式で切替
+  $('reveal-btn').style.display = 'none';
+  $('kanji-reveal').style.display = 'none';
+
+  if (q.type === 'input') {
+    $('choices').style.display = 'none';
+    $('input-row').style.display = 'flex';
+    $('answer-input').value = '';
+    $('answer-input').disabled = false;
+    $('answer-submit').disabled = false;
+    setTimeout(() => $('answer-input').focus(), 100);
+  } else {
+    $('input-row').style.display = 'none';
+    $('choices').style.display = 'grid';
+    const ce = $('choices');
+    ce.innerHTML = '';
+    q.choices.forEach((choice, i) => {
+      const btn = document.createElement('button');
+      btn.textContent = choice;
+      btn.className = 'choice-btn';
+      btn.onclick = () => selectChoice(i);
+      ce.appendChild(btn);
+    });
+  }
+}
+
+function showKanji(q) {
+  const catEl = $('category');
+  catEl.textContent = '漢字';
+  catEl.className = 'badge b-kanji';
+  $('canvas-title').textContent = '✏️ ここに漢字を書こう';
+
+  const html = q.ex.replace(/\{\{(.+?)\}\}/g, '<span class="hiragana">$1</span>');
+  $('question').innerHTML = html;
+
+  // 漢字モードはくまさんヒントは使わず、答えを見る方式
+  $('bear-area').style.display = 'none';
+  $('bear-hint-detail').style.display = 'none';
+
+  $('choices').style.display = 'none';
+  $('input-row').style.display = 'none';
+  $('reveal-btn').style.display = 'block';
+  $('reveal-btn').disabled = false;
+  $('kanji-reveal').style.display = 'none';
+  $('kanji-correct').disabled = false;
+  $('kanji-wrong').disabled = false;
+  $('kanji-correct').style.opacity = '1';
+  $('kanji-wrong').style.opacity = '1';
+}
+
+// くまさんヒント（段階的に詳しくなる）
+let bearClickCount = 0;
+$('bear-char').addEventListener('click', () => {
+  if ($('bear-char').classList.contains('disabled')) return;
+  const q = questions[idx];
+  if (!usedHint) {
+    // 1回目：ヒント①
+    $('bear-hint-detail').innerHTML = '<strong>🐻 ヒント①</strong><br>' + q.hint1;
+    $('bear-hint-detail').style.display = 'block';
+    $('bear-speech').innerHTML = '<strong>もう1回押すと、もっとくわしく教えるよ！</strong>';
+    usedHint = true;
+    bearClickCount = 1;
+  } else if (bearClickCount === 1) {
+    // 2回目：ヒント②
+    $('bear-hint-detail').innerHTML = '<strong>🐻 ヒント②（もっとくわしく）</strong><br>' + q.hint2;
+    $('bear-speech').innerHTML = '<strong>これで解けるかな？がんばれ！</strong>';
+    $('bear-char').classList.add('disabled');
+    bearClickCount = 2;
+  }
+});
+
+// 選択式の回答
+function selectChoice(i) {
+  if (answered) return;
+  answered = true;
+  const q = questions[idx];
+  const ok = i === q.answer;
+  const btns = $('choices').querySelectorAll('button');
+
+  btns.forEach((b, j) => {
+    b.disabled = true;
+    if (j === q.answer) b.classList.add('choice-correct');
+    else if (j === i && !ok) b.classList.add('choice-wrong');
+    else b.classList.add('choice-dim');
+  });
+
+  finishAnswer(ok, q);
+}
+
+// 入力式の回答
+function normalize(s) {
+  return String(s || '')
+    .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .replace(/[。、，,\s]/g, '')
+    .trim();
+}
+
+$('answer-submit').addEventListener('click', submitInputAnswer);
+$('answer-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') submitInputAnswer();
+});
+
+function submitInputAnswer() {
+  if (answered) return;
+  const q = questions[idx];
+  const user = normalize($('answer-input').value);
+  if (!user) return;
+  answered = true;
+  $('answer-input').disabled = true;
+  $('answer-submit').disabled = true;
+
+  const candidates = [normalize(q.answer), ...(q.altAnswers || []).map(normalize)];
+  const ok = candidates.includes(user);
+
+  // 正解表示
+  if (!ok) {
+    const fb = $('feedback');
+    // 正解を強調
+  }
+  finishAnswer(ok, q);
+}
+
+function finishAnswer(ok, q) {
+  // くまさんエリアを閉じる
+  $('bear-area').style.display = 'none';
+  $('bear-hint-detail').style.display = 'none';
+
+  const fb = $('feedback');
+  if (ok) {
+    correct++;
+    streak++;
+    maxStreak = Math.max(maxStreak, streak);
+    const base = usedHint ? POINTS_HINT : POINTS_NO_HINT;
+    const streakBonus = Math.max(0, streak - 1) * 2;
+    const pts = base + streakBonus;
+    score += pts;
+    if (!usedHint) noHintCount++;
+
+    fb.className = 'feedback fb-correct';
+    let msg = '';
+    if (!usedHint) {
+      msg = '🔥 <strong>ノーヒントで正解！</strong> +' + pts + '点（3倍ボーナス！）';
+    } else {
+      msg = '✨ <strong>せいかい！</strong> +' + pts + '点';
+    }
+    if (streak >= 3) msg += '　' + streak + '連続';
+    fb.innerHTML = msg;
+  } else {
+    streak = 0;
+    fb.className = 'feedback fb-wrong';
+    const ansText = q.type === 'input' ? q.answer : q.choices[q.answer];
+    fb.innerHTML = '💭 <strong>ざんねん</strong>　正解は「' + ansText + '」';
+  }
+  fb.style.display = 'block';
+
+  const ex = q.exp;
+  let expHtml = '<h4>📖 ' + ex.title + '</h4><p style="margin:0 0 8px;">' + ex.body + '</p>';
+  if (ex.formula) expHtml += '<div class="formula">' + ex.formula + '</div>';
+  if (ex.tip) expHtml += '<div class="tip">💡 ' + ex.tip + '</div>';
+  $('explanation').innerHTML = expHtml;
+  $('explanation').style.display = 'block';
+
+  $('next-btn').textContent = idx === TOTAL - 1 ? '結果を見る →' : 'つぎの問題へ →';
+  $('next-btn').style.display = 'block';
+  $('progress').style.width = ((idx + 1) / TOTAL * 100) + '%';
+}
+
+// 漢字モードの答えを見る
+$('reveal-btn').onclick = () => {
+  const q = questions[idx];
+  $('kanji-answer').textContent = q.ans;
+  $('kanji-reading').innerHTML = '<span class="label">読み方</span>' + q.read;
+  $('kanji-reveal').style.display = 'block';
+  $('reveal-btn').style.display = 'none';
+};
+
+$('kanji-correct').onclick = () => kanjiAnswer(true);
+$('kanji-wrong').onclick = () => kanjiAnswer(false);
+
+function kanjiAnswer(ok) {
+  if (answered) return;
+  answered = true;
+  const q = questions[idx];
+  $('kanji-correct').disabled = true;
+  $('kanji-wrong').disabled = true;
+  $('kanji-correct').style.opacity = ok ? '1' : '0.4';
+  $('kanji-wrong').style.opacity = ok ? '0.4' : '1';
+
+  const fb = $('feedback');
+  if (ok) {
+    correct++;
+    streak++;
+    maxStreak = Math.max(maxStreak, streak);
+    // 漢字はヒント方式がちがうので一律15点（書けたら自力正解）
+    const pts = POINTS_NO_HINT + Math.max(0, streak - 1) * 2;
+    score += pts;
+    noHintCount++;
+    fb.className = 'feedback fb-correct';
+    fb.innerHTML = streak >= 3
+      ? '🎉 <strong>書けたね！</strong> +' + pts + '点（' + streak + '連続）'
+      : '✨ <strong>書けたね！</strong> +' + pts + '点';
+  } else {
+    streak = 0;
+    fb.className = 'feedback fb-wrong';
+    fb.innerHTML = '💭 <strong>書けなかった漢字こそ、覚えるチャンス</strong>';
+  }
+  fb.style.display = 'block';
+
+  $('explanation').innerHTML = '<h4>📖 ' + q.ans + ' について</h4><p style="margin:0 0 8px;">' + q.mean + '</p><div class="tip">💡 声に出して読みながら、もう1回書いてみると記憶に残るよ。</div>';
+  $('explanation').style.display = 'block';
+
+  $('next-btn').textContent = idx === TOTAL - 1 ? '結果を見る →' : 'つぎの問題へ →';
+  $('next-btn').style.display = 'block';
+  $('progress').style.width = ((idx + 1) / TOTAL * 100) + '%';
+}
+
+$('next-btn').onclick = () => {
+  idx++;
+  if (idx >= TOTAL) end();
+  else show();
+};
+
+function end() {
+  if (timer) clearInterval(timer);
+  const elapsed = Math.min(300 - timeLeft, 300);
+  const m = Math.floor(elapsed / 60);
+  const s = elapsed % 60;
+
+  // === 貯金処理 ===
+  const savings = loadSavings();
+
+  // 月跨ぎチェック（月変わったら上限リセット）
+  if (savings.monthYearKey !== thisMonthKey()) {
+    savings.monthYearKey = thisMonthKey();
+    savings.monthEarnedYen = 0;
+  }
+
+  // 連続日数の更新
+  const today = todayStr();
+  let isNewDay = false;
+  if (savings.lastPlayDate !== today) {
+    isNewDay = true;
+    if (savings.lastPlayDate === yesterdayStr()) {
+      savings.consecutiveDays += 1;
+    } else if (savings.lastPlayDate === null) {
+      savings.consecutiveDays = 1;
+      // 日数が0からスタート→過去達成記録もリセット
+      savings.achievedStreaks = [];
+    } else {
+      // 連続が途切れた→リセット
+      savings.consecutiveDays = 1;
+      savings.achievedStreaks = [];
+    }
+    savings.lastPlayDate = today;
+  }
+
+  // ボーナス計算
+  const baseScore = score;
+  const bonusList = [];
+  let totalBonus = 0;
+
+  // 全問正解
+  if (correct === TOTAL) {
+    bonusList.push({ name: '✨ 全問正解', pts: BONUS_PERFECT });
+    totalBonus += BONUS_PERFECT;
+  }
+  // 全問ノーヒント
+  if (noHintCount === TOTAL) {
+    bonusList.push({ name: '🔥 全問ノーヒント', pts: BONUS_NO_HINT_ALL });
+    totalBonus += BONUS_NO_HINT_ALL;
+  }
+
+  // 連続ボーナス（その日新規にプレイした場合のみチェック）
+  if (isNewDay) {
+    for (const b of STREAK_BONUSES) {
+      if (savings.consecutiveDays >= b.days && !savings.achievedStreaks.includes(b.days)) {
+        bonusList.push({ name: b.emoji + ' ' + b.label, pts: b.pts });
+        totalBonus += b.pts;
+        savings.achievedStreaks.push(b.days);
+      }
+    }
+  }
+
+  const totalEarnedPoints = baseScore + totalBonus;
+
+  // 月間上限チェック
+  const monthRemainingYen = Math.max(0, MONTHLY_LIMIT_YEN - savings.monthEarnedYen);
+  const earnedYen = pointsToYen(totalEarnedPoints);
+  const cappedYen = Math.min(earnedYen, monthRemainingYen);
+  const cappedPoints = cappedYen; // 1点=1円なのでそのまま
+
+  savings.pendingPoints += cappedPoints;
+  savings.monthEarnedYen += cappedYen;
+  saveSavings(savings);
+
+  // === 画面表示 ===
+  showScreen('result-screen');
+
+  $('correct-count').textContent = correct + '/' + TOTAL;
+  $('score').textContent = score;
+  $('time-taken').textContent = m + ':' + String(s).padStart(2, '0');
+
+  // 今回の収入カード
+  $('earnings-amount').textContent = cappedYen.toLocaleString();
+  let bonusHtml = '<div class="item"><span>クイズの点数</span><span>' + baseScore + '点</span></div>';
+  bonusList.forEach(b => {
+    bonusHtml += '<div class="item bonus"><span>' + b.name + '</span><span>+' + b.pts + '点</span></div>';
+  });
+  bonusHtml += '<div class="item" style="border-top:1px dashed #FFB8D0; margin-top:6px; padding-top:6px;"><span>合計</span><span><strong>' + totalEarnedPoints + '点 = ' + earnedYen.toLocaleString() + '円</strong></span></div>';
+  if (cappedYen < earnedYen) {
+    bonusHtml += '<div class="item" style="color:#888780;font-size:11px;margin-top:4px;"><span>📅 月の上限到達</span><span>もらえる：' + cappedYen + '円</span></div>';
+  }
+  $('earnings-bonus').innerHTML = bonusHtml;
+
+  const pct = correct / TOTAL;
+  let emoji, title, msg;
+  if (pct === 1) { emoji = '🌟'; title = 'パーフェクト！'; msg = '全問正解！今日も最高のスタート'; }
+  else if (pct >= 0.8) { emoji = '✨'; title = 'すばらしい！'; msg = 'とっても良くできました'; }
+  else if (pct >= 0.6) { emoji = '👏'; title = 'よくできました'; msg = 'いい調子！明日はもっと取れるよ'; }
+  else if (pct >= 0.4) { emoji = '💪'; title = 'もう少し！'; msg = '毎日続ければ絶対のびる'; }
+  else { emoji = '🌱'; title = 'ナイスチャレンジ'; msg = '挑戦したことが一番大事！'; }
+  $('result-emoji').textContent = emoji;
+  $('result-title').textContent = title;
+  $('result-msg').textContent = msg;
+
+  if (noHintCount > 0) {
+    $('no-hint-box').style.display = 'block';
+    $('no-hint-box').textContent = '🔥 ノーヒント正解 ' + noHintCount + '問！（3倍ボーナス獲得）';
+  } else {
+    $('no-hint-box').style.display = 'none';
+  }
+
+  if (maxStreak >= 3) {
+    $('streak-display').style.display = 'block';
+    $('streak-display').textContent = '🎯 最高 ' + maxStreak + ' 問連続正解！';
+  } else {
+    $('streak-display').style.display = 'none';
+  }
+}
+
+$('start-btn').onclick = start;
+$('restart-btn').onclick = () => {
+  showScreen('start-screen');
+  updatePiggyDisplay();
+};
+
+// === 受け取りモーダル ===
+$('piggy-collect').onclick = () => {
+  const s = loadSavings();
+  if (s.pendingPoints === 0) return;
+  const yen = pointsToYen(s.pendingPoints);
+  $('modal-amount').textContent = yen.toLocaleString();
+  $('modal-detail').innerHTML =
+    '<strong>' + s.pendingPoints + '点</strong> を換金します<br>' +
+    '<span style="font-size:11px; color:#888780;">レート：1点 = ' + YEN_PER_POINT + '円</span>' +
+    '<br><br><span style="color:#5F4125;">受け取ったらママかパパに見せてね！</span>';
+  $('modal-overlay').classList.add('active');
+};
+$('modal-cancel').onclick = () => {
+  $('modal-overlay').classList.remove('active');
+};
+$('modal-confirm').onclick = () => {
+  const s = loadSavings();
+  const yen = pointsToYen(s.pendingPoints);
+  const pts = s.pendingPoints;
+  s.totalYen += yen;
+  s.history.push({ date: todayStr(), points: pts, yen: yen });
+  s.pendingPoints = 0;
+  saveSavings(s);
+  $('modal-overlay').classList.remove('active');
+  updatePiggyDisplay();
+
+  // お祝い演出
+  $('modal-icon').textContent = '🎉';
+  $('modal-title').textContent = 'おめでとう！';
+  setTimeout(() => {
+    $('modal-icon').textContent = '💰';
+    $('modal-title').textContent = 'お金を受け取る？';
+  }, 1000);
+};
+
+// 初回表示
+updatePiggyDisplay();
+
+// ========= 描画エリア =========
+const canvas = $('note-canvas');
+const ctx = canvas.getContext('2d');
+let drawing = false;
+let currentColor = '#2C2C2A';
+let currentTool = 'pen';
+let lastX = 0, lastY = 0;
+
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+}
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+}
+
+function startDraw(e) {
+  e.preventDefault();
+  drawing = true;
+  const p = getPos(e);
+  lastX = p.x; lastY = p.y;
+}
+
+function draw(e) {
+  if (!drawing) return;
+  e.preventDefault();
+  const p = getPos(e);
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(p.x, p.y);
+  if (currentTool === 'eraser') {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.strokeStyle = 'rgba(0,0,0,1)';
+    ctx.lineWidth = 18;
+  } else {
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = currentColor;
+    ctx.lineWidth = 2.5;
+  }
+  ctx.stroke();
+  lastX = p.x; lastY = p.y;
+}
+
+function endDraw(e) {
+  if (e) e.preventDefault();
+  drawing = false;
+}
+
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', endDraw);
+canvas.addEventListener('mouseleave', endDraw);
+canvas.addEventListener('touchstart', startDraw, { passive: false });
+canvas.addEventListener('touchmove', draw, { passive: false });
+canvas.addEventListener('touchend', endDraw, { passive: false });
+
+document.querySelectorAll('.color-swatch').forEach(sw => {
+  sw.addEventListener('click', () => {
+    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+    sw.classList.add('active');
+    currentColor = sw.dataset.color;
+    currentTool = 'pen';
+    $('eraser-btn').classList.remove('active');
+  });
+});
+
+$('eraser-btn').addEventListener('click', () => {
+  currentTool = currentTool === 'eraser' ? 'pen' : 'eraser';
+  $('eraser-btn').classList.toggle('active', currentTool === 'eraser');
+});
+
+function clearCanvas() {
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+}
+$('clear-btn').addEventListener('click', clearCanvas);
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+</script>
+</body>
+</html>
