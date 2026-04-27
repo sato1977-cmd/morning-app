@@ -604,6 +604,15 @@
   </div>
 </div>
 
+  <!-- 一時停止オーバーレイ -->
+  <div id="pause-overlay" class="pause-overlay">
+    <div class="pause-card">
+      <h2>⏸ 一時停止中</h2>
+      <p>準備ができたら再開してね</p>
+      <button class="resume-btn" id="resume-btn">▶ 再開する</button>
+    </div>
+  </div>
+
 <script>
 const CATS = {
   '算数':'b-math','国語':'b-jp','漢字':'b-kanji','理科':'b-sci','社会':'b-soc','ひらめき':'b-think'
@@ -1931,14 +1940,5 @@ $('clear-btn').addEventListener('click', clearCanvas);
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 </script>
-  <!-- 一時停止オーバーレイ -->
-  <div id="pause-overlay" class="pause-overlay">
-    <div class="pause-card">
-      <h2>⏸ 一時停止中</h2>
-      <p>準備ができたら再開してね</p>
-      <button class="resume-btn" id="resume-btn">▶ 再開する</button>
-    </div>
-  </div>
-
 </body>
 </html>
