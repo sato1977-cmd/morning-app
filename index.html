@@ -83,6 +83,37 @@
     transition: background 0.15s;
   }
   .icon-btn:active { background: #E8E2D5; transform: scale(0.95); }
+  .link-btn {
+    background: none; border: none; color: #888780;
+    font-size: 13px; cursor: pointer; padding: 8px;
+    margin-top: 8px; font-family: inherit; text-decoration: underline;
+  }
+  .history-card { max-width: 560px; max-height: 85vh; overflow-y: auto; }
+  .history-stats {
+    background: #FFF5E8; padding: 12px; border-radius: 10px;
+    margin-bottom: 12px; font-size: 13px; text-align: left; line-height: 1.6;
+    color: #5F4125;
+  }
+  .history-table-wrap { overflow: auto; margin-bottom: 16px; max-height: 50vh; }
+  .history-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  .history-table th, .history-table td {
+    padding: 6px 6px; border-bottom: 1px solid #F0EDE5; text-align: center;
+    white-space: nowrap;
+  }
+  .history-table th {
+    background: #FFF5E8; font-weight: 600; color: #5F4125;
+    position: sticky; top: 0; z-index: 1;
+  }
+  .history-empty { text-align: center; color: #888780; padding: 24px; }
+  .history-buttons { display: flex; gap: 10px; }
+  .history-buttons button { flex: 1; padding: 13px; font-size: 14px; }
+  .history-buttons .close-btn {
+    background: #888780; color: white; border: none; border-radius: 14px;
+    cursor: pointer; font-family: inherit; font-weight: 600;
+    box-shadow: none;
+  }
+  .history-buttons .close-btn:active { transform: scale(0.98); }
+
   .pause-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.65);
     display: none; align-items: center; justify-content: center;
@@ -458,6 +489,7 @@
     </div>
 
     <button class="primary-btn" id="start-btn">スタート</button>
+    <div style="text-align:center;"><button id="history-btn" class="link-btn">📊 履歴を見る（パパ・ママ用）</button></div>
   </div>
 
   <!-- クイズ画面 -->
@@ -604,6 +636,19 @@
     </div>
   </div>
 </div>
+
+  <!-- 履歴オーバーレイ -->
+  <div id="history-overlay" class="pause-overlay">
+    <div class="pause-card history-card">
+      <h2>📊 履歴</h2>
+      <div id="history-stats" class="history-stats"></div>
+      <div id="history-table-wrap"></div>
+      <div class="history-buttons">
+        <button class="resume-btn" id="copy-csv-btn">📋 エクセルにコピー</button>
+        <button class="close-btn" id="close-history-btn">閉じる</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 一時停止オーバーレイ -->
   <div id="pause-overlay" class="pause-overlay">
@@ -1270,7 +1315,8 @@ function defaultSavings() {
     achievedStreaks: [],      // 達成済みの連続日数（重複防止）
     monthYearKey: null,       // 当月キー（YYYY-MM）
     monthEarnedYen: 0,        // 当月の収入合計
-    history: []
+    history: [],
+    sessions: []             // セッションごとの履歴（履歴管理用）
   };
 }
 function saveSavings(s) {
@@ -1349,6 +1395,63 @@ let timeLeft = 300, timer = null, answered = false;
 let usedHint = false;
 
 const $ = id => document.getElementById(id);
+
+function showHistory() {
+  const s = loadSavings();
+  const sessions = (s.sessions || []).slice();
+  // stats
+  const totalYen = sessions.reduce((a, x) => a + (x.yen || 0), 0);
+  const receivedYen = sessions.filter(x => x.received).reduce((a, x) => a + (x.yen || 0), 0);
+  const pendingYen = totalYen - receivedYen;
+  const uniqueDays = new Set(sessions.map(x => x.date)).size;
+  document.getElementById('history-stats').innerHTML =
+    '📅 ' + uniqueDays + '日チャレンジ達成 ／ 累計 <strong>' + totalYen.toLocaleString() + '円</strong><br>' +
+    '⭕ 受取済み ' + receivedYen.toLocaleString() + '円 ／ ❌ 未受取 ' + pendingYen.toLocaleString() + '円';
+  // table
+  const wrap = document.getElementById('history-table-wrap');
+  if (sessions.length === 0) {
+    wrap.innerHTML = '<div class="history-empty">まだ履歴がありません。</div>';
+  } else {
+    let html = '<table class="history-table"><thead><tr>' +
+      '<th>日付</th><th>モード</th><th>点数</th><th>金額</th><th>連続</th><th>正解</th><th>ﾉｰﾋﾝﾄ</th><th>受取</th>' +
+      '</tr></thead><tbody>';
+    sessions.reverse().forEach(r => {
+      html += '<tr><td>' + r.date + '</td><td>' + r.mode + '</td><td>' + r.points +
+        '</td><td>' + r.yen + '円</td><td>' + (r.streakDay || '-') + '</td><td>' +
+        r.correct + '/10</td><td>' + r.noHint + '/10</td><td>' +
+        (r.received ? '⭕' : '❌') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }
+  document.getElementById('history-overlay').classList.add('active');
+}
+
+function hideHistory() {
+  document.getElementById('history-overlay').classList.remove('active');
+}
+
+function copyHistoryCSV() {
+  const s = loadSavings();
+  const sessions = s.sessions || [];
+  let csv = '日付,モード,点数,金額,連続日数,正解,ノーヒント,受取\n';
+  sessions.forEach(r => {
+    csv += [r.date, r.mode, r.points, r.yen, (r.streakDay || ''),
+            r.correct, r.noHint, r.received ? '済' : '未'].join(',') + '\n';
+  });
+  function ok() { alert('コピーできたよ！\nMacのエクセルでペースト（⌘+V）してね。'); }
+  function fallback() {
+    const ta = document.createElement('textarea');
+    ta.value = csv; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); ok(); }
+    catch (e) { alert('コピーできませんでした。'); }
+    document.body.removeChild(ta);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(csv).then(ok).catch(fallback);
+  } else { fallback(); }
+}
 
 function tickTimer() {
   timeLeft--;
@@ -1758,6 +1861,17 @@ function end() {
 
   savings.pendingPoints += cappedPoints;
   savings.monthEarnedYen += cappedYen;
+  if (!savings.sessions) savings.sessions = [];
+  savings.sessions.push({
+    date: today,
+    mode: mode === 'kanji' ? '漢字' : 'ミックス',
+    points: totalEarnedPoints,
+    yen: cappedYen,
+    streakDay: savings.consecutiveDays,
+    correct: correct,
+    noHint: noHintCount,
+    received: false
+  });
   saveSavings(savings);
 
   // === 画面表示 ===
@@ -1808,6 +1922,9 @@ function end() {
 $('pause-btn').onclick = pauseQuiz;
 $('resume-btn').onclick = resumeQuiz;
 $('reset-btn').onclick = resetToStart;
+$('history-btn').onclick = showHistory;
+$('close-history-btn').onclick = hideHistory;
+$('copy-csv-btn').onclick = copyHistoryCSV;
 $('start-btn').onclick = start;
 $('restart-btn').onclick = () => {
   showScreen('start-screen');
@@ -1835,6 +1952,7 @@ $('modal-confirm').onclick = () => {
   const pts = s.pendingPoints;
   s.totalYen += yen;
   s.history.push({ date: todayStr(), points: pts, yen: yen });
+  if (s.sessions) { s.sessions.forEach(ss => { if (!ss.received) ss.received = true; }); }
   s.pendingPoints = 0;
   saveSavings(s);
   $('modal-overlay').classList.remove('active');
