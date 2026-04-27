@@ -74,6 +74,34 @@
   .progress-bar { background: #F0EDE5; height: 6px; border-radius: 3px; margin-bottom: 14px; overflow: hidden; }
   .progress-fill { background: linear-gradient(90deg, #FF8C5A, #FF6B9D); height: 100%; width: 10%; transition: width 0.3s; }
 
+  .q-actions { display: flex; align-items: center; gap: 8px; }
+  .icon-btn {
+    background: #F8F5F0; border: none; border-radius: 8px;
+    padding: 6px 10px; cursor: pointer; font-size: 14px;
+    font-family: inherit; color: #5F5E5A;
+    transition: background 0.15s;
+  }
+  .icon-btn:active { background: #E8E2D5; transform: scale(0.95); }
+  .pause-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+    display: none; align-items: center; justify-content: center;
+    z-index: 1000; padding: 20px;
+  }
+  .pause-overlay.active { display: flex; }
+  .pause-card {
+    background: #FFFFFF; border-radius: 16px; padding: 28px 24px;
+    text-align: center; max-width: 320px; width: 100%;
+  }
+  .pause-card h2 { margin: 0 0 8px; font-size: 22px; }
+  .pause-card p { margin: 0 0 20px; font-size: 14px; color: #888780; }
+  .pause-card .resume-btn {
+    width: 100%; padding: 16px; font-size: 17px; font-weight: 600;
+    background: linear-gradient(135deg, #FF8C5A 0%, #FF6B9D 100%);
+    color: white; border: none; border-radius: 14px; cursor: pointer;
+    font-family: inherit; box-shadow: 0 4px 14px rgba(255,107,157,0.3);
+  }
+  .pause-card .resume-btn:active { transform: scale(0.98); }
+
   .question-box { background: #FFFAF3; border-radius: 14px; padding: 18px 16px; margin-bottom: 12px; }
   .question-text { font-size: 18px; line-height: 1.7; margin: 0; font-weight: 500; }
   .question-text .hiragana {
@@ -438,7 +466,11 @@
         <span class="q-num" id="q-num">1 / 10</span>
         <span class="badge" id="category">算数</span>
       </div>
-      <span class="timer" id="timer">5:00</span>
+      <div class="q-actions">
+        <button id="pause-btn" class="icon-btn" title="一時停止" aria-label="一時停止">⏸</button>
+        <button id="reset-btn" class="icon-btn" title="やめる" aria-label="やめる">🏠</button>
+        <span class="timer" id="timer">5:00</span>
+      </div>
     </div>
 
     <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
@@ -1308,6 +1340,35 @@ let usedHint = false;
 
 const $ = id => document.getElementById(id);
 
+function tickTimer() {
+  timeLeft--;
+  const m = Math.floor(timeLeft / 60);
+  const s = timeLeft % 60;
+  $('timer').textContent = m + ':' + String(s).padStart(2, '0');
+  if (timeLeft <= 30) $('timer').style.color = '#A32D2D';
+  if (timeLeft <= 0) { clearInterval(timer); end(); }
+}
+
+function pauseQuiz() {
+  if (timer) { clearInterval(timer); timer = null; }
+  $('pause-overlay').classList.add('active');
+}
+
+function resumeQuiz() {
+  $('pause-overlay').classList.remove('active');
+  if (!timer) timer = setInterval(tickTimer, 1000);
+}
+
+function resetToStart() {
+  const ok = confirm('本当にトップ画面に戻りますか？\n今までの解答はすべて破棄されます。');
+  if (!ok) return;
+  if (timer) { clearInterval(timer); timer = null; }
+  $('pause-overlay').classList.remove('active');
+  $('timer').style.color = '';
+  showScreen('start-screen');
+  if (typeof updatePiggyDisplay === 'function') updatePiggyDisplay();
+}
+
 function showScreen(name) {
   ['start-screen','quiz-screen','result-screen'].forEach(s => $(s).classList.remove('active'));
   $(name).classList.add('active');
@@ -1354,14 +1415,7 @@ function start() {
   showScreen('quiz-screen');
 
   if (timer) clearInterval(timer);
-  timer = setInterval(() => {
-    timeLeft--;
-    const m = Math.floor(timeLeft / 60);
-    const s = timeLeft % 60;
-    $('timer').textContent = m + ':' + String(s).padStart(2, '0');
-    if (timeLeft <= 30) $('timer').style.color = '#A32D2D';
-    if (timeLeft <= 0) { clearInterval(timer); end(); }
-  }, 1000);
+  timer = setInterval(tickTimer, 1000);
   show();
 }
 
@@ -1740,6 +1794,9 @@ function end() {
   }
 }
 
+$('pause-btn').onclick = pauseQuiz;
+$('resume-btn').onclick = resumeQuiz;
+$('reset-btn').onclick = resetToStart;
 $('start-btn').onclick = start;
 $('restart-btn').onclick = () => {
   showScreen('start-screen');
@@ -1874,5 +1931,14 @@ $('clear-btn').addEventListener('click', clearCanvas);
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 </script>
+  <!-- 一時停止オーバーレイ -->
+  <div id="pause-overlay" class="pause-overlay">
+    <div class="pause-card">
+      <h2>⏸ 一時停止中</h2>
+      <p>準備ができたら再開してね</p>
+      <button class="resume-btn" id="resume-btn">▶ 再開する</button>
+    </div>
+  </div>
+
 </body>
 </html>
