@@ -494,7 +494,7 @@
 
     <button class="primary-btn" id="start-btn">スタート</button>
     <div style="text-align:center;"><button id="history-btn" class="link-btn">📊 履歴を見る（パパ・ママ用）</button></div>
-    <div class="version-info">v7.5 · 2026-04-27</div>
+    <div class="version-info">v7.6 · 2026-05-02</div>
   </div>
 
   <!-- クイズ画面 -->
@@ -1831,7 +1831,6 @@ function kanjiAnswer(ok) {
   if (answered) return;
   answered = true;
   const q = questions[idx];
-  const __kanjiPre = score;
   $('kanji-correct').disabled = true;
   $('kanji-wrong').disabled = true;
   $('kanji-correct').style.opacity = ok ? '1' : '0.4';
@@ -2075,15 +2074,30 @@ function resizeCanvas() {
   ctx.lineJoin = 'round';
 }
 
+let canvasRect = null;
+function invalidateCanvasRect() { canvasRect = null; }
 function getPos(e) {
-  const rect = canvas.getBoundingClientRect();
-  const t = e.touches ? e.touches[0] : e;
-  return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+  if (!canvasRect) canvasRect = canvas.getBoundingClientRect();
+  const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
+  return { x: t.clientX - canvasRect.left, y: t.clientY - canvasRect.top };
+}
+function applyToolStyle() {
+  if (currentTool === 'eraser') {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.strokeStyle = 'rgba(0,0,0,1)';
+    ctx.lineWidth = 18;
+  } else {
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = currentColor;
+    ctx.lineWidth = 2.5;
+  }
 }
 
 function startDraw(e) {
   e.preventDefault();
   drawing = true;
+  canvasRect = canvas.getBoundingClientRect();
+  applyToolStyle();
   const p = getPos(e);
   lastX = p.x; lastY = p.y;
 }
@@ -2095,15 +2109,6 @@ function draw(e) {
   ctx.beginPath();
   ctx.moveTo(lastX, lastY);
   ctx.lineTo(p.x, p.y);
-  if (currentTool === 'eraser') {
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.strokeStyle = 'rgba(0,0,0,1)';
-    ctx.lineWidth = 18;
-  } else {
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.strokeStyle = currentColor;
-    ctx.lineWidth = 2.5;
-  }
   ctx.stroke();
   lastX = p.x; lastY = p.y;
 }
@@ -2128,12 +2133,14 @@ document.querySelectorAll('.color-swatch').forEach(sw => {
     currentColor = sw.dataset.color;
     currentTool = 'pen';
     $('eraser-btn').classList.remove('active');
+    applyToolStyle();
   });
 });
 
 $('eraser-btn').addEventListener('click', () => {
   currentTool = currentTool === 'eraser' ? 'pen' : 'eraser';
   $('eraser-btn').classList.toggle('active', currentTool === 'eraser');
+  applyToolStyle();
 });
 
 function clearCanvas() {
@@ -2144,7 +2151,8 @@ function clearCanvas() {
 }
 $('clear-btn').addEventListener('click', clearCanvas);
 
-window.addEventListener('resize', resizeCanvas);
+window.addEventListener('resize', () => { resizeCanvas(); invalidateCanvasRect(); });
+window.addEventListener('scroll', invalidateCanvasRect, { passive: true });
 resizeCanvas();
 </script>
 </body>
