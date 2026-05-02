@@ -83,6 +83,10 @@
     transition: background 0.15s;
   }
   .icon-btn:active { background: #E8E2D5; transform: scale(0.95); }
+  .version-info {
+    text-align: center; font-size: 11px; color: #B0AFA8;
+    margin-top: 14px; padding-bottom: 4px;
+  }
   .link-btn {
     background: none; border: none; color: #888780;
     font-size: 13px; cursor: pointer; padding: 8px;
@@ -490,6 +494,7 @@
 
     <button class="primary-btn" id="start-btn">スタート</button>
     <div style="text-align:center;"><button id="history-btn" class="link-btn">📊 履歴を見る（パパ・ママ用）</button></div>
+    <div class="version-info">v7.5 · 2026-04-27</div>
   </div>
 
   <!-- クイズ画面 -->
@@ -644,7 +649,8 @@
       <div id="history-stats" class="history-stats"></div>
       <div id="history-table-wrap"></div>
       <div class="history-buttons">
-        <button class="resume-btn" id="copy-csv-btn">📋 エクセルにコピー</button>
+        <button class="resume-btn" id="copy-csv-btn">📋 履歴をコピー</button>
+        <button class="resume-btn" id="copy-detail-btn" style="background:linear-gradient(135deg,#7BA3D9 0%,#5C7FB8 100%); box-shadow:0 4px 14px rgba(92,127,184,0.3);">📋 詳細をコピー</button>
         <button class="close-btn" id="close-history-btn">閉じる</button>
       </div>
     </div>
@@ -1393,6 +1399,23 @@ let questions = [], idx = 0, correct = 0, score = 0, streak = 0, maxStreak = 0;
 let noHintCount = 0;
 let timeLeft = 300, timer = null, answered = false;
 let usedHint = false;
+let questionStartTime = 0;
+let sessionStartTimeMs = 0;
+let sessionQuestions = [];
+function trackQuestion(q, qType, ok, hintCount, pointsEarned) {
+  const timeSec = Math.round((Date.now() - questionStartTime) / 100) / 10;
+  const text = (q && (q.q || q.kanji || q.ans) || '').toString();
+  sessionQuestions.push({
+    qIdx: idx + 1,
+    cat: (q && q.cat) || '漢字',
+    qText: text.replace(/\n/g, ' ').slice(0, 100),
+    qType: qType,
+    timeSec: timeSec,
+    hintCount: hintCount || 0,
+    correct: !!ok,
+    pointsEarned: pointsEarned || 0
+  });
+}
 
 const $ = id => document.getElementById(id);
 
@@ -1429,6 +1452,47 @@ function showHistory() {
 
 function hideHistory() {
   document.getElementById('history-overlay').classList.remove('active');
+}
+
+function copyDetailCSV() {
+  const s = loadSavings();
+  const sessions = s.sessions || [];
+  const esc = v => {
+    const str = String(v == null ? '' : v);
+    return /[,"\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+  };
+  let csv = '日付,時刻,通算回,問番号,教科,問題,所要秒,ヒント数,正解,獲得点\n';
+  let sessIdx = 0;
+  sessions.forEach(sess => {
+    sessIdx++;
+    const qs = sess.questions || [];
+    qs.forEach(q => {
+      csv += [
+        esc(sess.date),
+        esc(sess.timeStr || ''),
+        sessIdx,
+        q.qIdx,
+        esc(q.cat),
+        esc(q.qText),
+        q.timeSec,
+        q.hintCount,
+        q.correct ? '○' : '×',
+        q.pointsEarned
+      ].join(',') + '\n';
+    });
+  });
+  function ok() { alert('問題別の詳細をコピーしました!\nエクセルの「問題別履歴」シートのA4にペースト(⌘+V)してね。'); }
+  function fallback() {
+    const ta = document.createElement('textarea');
+    ta.value = csv; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); ok(); }
+    catch (e) { alert('コピーできませんでした。'); }
+    document.body.removeChild(ta);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(csv).then(ok).catch(fallback);
+  } else { fallback(); }
 }
 
 function copyHistoryCSV() {
@@ -1524,6 +1588,8 @@ function start() {
 
   idx = 0; correct = 0; score = 0; streak = 0; maxStreak = 0;
   noHintCount = 0; timeLeft = 300;
+  sessionQuestions = [];
+  sessionStartTimeMs = Date.now();
   $('timer').style.color = '';
   showScreen('quiz-screen');
   if (typeof resizeCanvas === 'function') resizeCanvas();
@@ -1536,6 +1602,8 @@ function start() {
 function show() {
   answered = false;
   usedHint = false;
+  questionStartTime = Date.now();
+  bearClickCount = 0;
   const q = questions[idx];
   $('q-num').textContent = (idx + 1) + ' / ' + TOTAL;
 
@@ -1654,7 +1722,9 @@ function selectChoice(i) {
     else b.classList.add('choice-dim');
   });
 
+  const __pre = score;
   finishAnswer(ok, q);
+  trackQuestion(q, 'choice', ok, bearClickCount, score - __pre);
 }
 
 // 入力式の回答
@@ -1687,7 +1757,9 @@ function submitInputAnswer() {
     const fb = $('feedback');
     // 正解を強調
   }
+  const __pre = score;
   finishAnswer(ok, q);
+  trackQuestion(q, 'input', ok, bearClickCount, score - __pre);
 }
 
 function finishAnswer(ok, q) {
@@ -1735,6 +1807,14 @@ function finishAnswer(ok, q) {
   $('progress').style.width = ((idx + 1) / TOTAL * 100) + '%';
 }
 
+const __origKanjiAnswer = kanjiAnswer;
+kanjiAnswer = function(ok) {
+  const __pre = score;
+  __origKanjiAnswer(ok);
+  const q = questions[idx];
+  trackQuestion(q, 'kanji', ok, 0, score - __pre);
+};
+
 // 漢字モードの答えを見る
 $('reveal-btn').onclick = () => {
   const q = questions[idx];
@@ -1751,6 +1831,7 @@ function kanjiAnswer(ok) {
   if (answered) return;
   answered = true;
   const q = questions[idx];
+  const __kanjiPre = score;
   $('kanji-correct').disabled = true;
   $('kanji-wrong').disabled = true;
   $('kanji-correct').style.opacity = ok ? '1' : '0.4';
@@ -1862,14 +1943,19 @@ function end() {
   savings.pendingPoints += cappedPoints;
   savings.monthEarnedYen += cappedYen;
   if (!savings.sessions) savings.sessions = [];
+  const __now = new Date();
+  const __timeStr = String(__now.getHours()).padStart(2,'0') + ':' + String(__now.getMinutes()).padStart(2,'0');
   savings.sessions.push({
     date: today,
+    timeStr: __timeStr,
     mode: mode === 'kanji' ? '漢字' : 'ミックス',
     points: totalEarnedPoints,
     yen: cappedYen,
     streakDay: savings.consecutiveDays,
     correct: correct,
     noHint: noHintCount,
+    durationSec: Math.round((Date.now() - sessionStartTimeMs) / 1000),
+    questions: sessionQuestions.slice(),
     received: false
   });
   saveSavings(savings);
@@ -1925,6 +2011,7 @@ $('reset-btn').onclick = resetToStart;
 $('history-btn').onclick = showHistory;
 $('close-history-btn').onclick = hideHistory;
 $('copy-csv-btn').onclick = copyHistoryCSV;
+$('copy-detail-btn').onclick = copyDetailCSV;
 $('start-btn').onclick = start;
 $('restart-btn').onclick = () => {
   showScreen('start-screen');
