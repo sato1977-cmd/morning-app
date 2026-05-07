@@ -118,6 +118,118 @@
   }
   .history-buttons .close-btn:active { transform: scale(0.98); }
 
+  /* ==== パパ・ママモード（v7.7） ==== */
+  .pin-card { max-width: 320px; }
+  .pin-display {
+    font-size: 28px; letter-spacing: 12px; margin: 12px 0 16px;
+    color: #2C2C2A; min-height: 36px; font-variant-numeric: tabular-nums;
+  }
+  .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 4px; }
+  .pin-key {
+    padding: 14px 0; font-size: 20px; font-weight: 500;
+    background: #F8F5F0; border: none; border-radius: 12px;
+    cursor: pointer; font-family: inherit; color: #2C2C2A;
+    transition: background 0.1s;
+  }
+  .pin-key:active { background: #E8E2D5; transform: scale(0.96); }
+  .pin-key.del, .pin-key.cancel { font-size: 14px; color: #888780; }
+  .pin-error { color: #A32D2D; font-size: 12px; min-height: 16px; margin: 6px 0 8px; }
+  @keyframes pinShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+  .pin-shake { animation: pinShake 0.3s; }
+
+  .parent-card {
+    max-width: 600px; max-height: 92vh; width: 100%;
+    display: flex; flex-direction: column; padding: 0; overflow: hidden;
+  }
+  .parent-header {
+    padding: 14px 18px; border-bottom: 1px solid #F0EDE5;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .parent-header h2 { margin: 0; font-size: 17px; }
+  .parent-close {
+    background: none; border: none; font-size: 22px; color: #888780;
+    cursor: pointer; padding: 0 4px; line-height: 1; font-family: inherit;
+  }
+  .parent-tabs {
+    display: flex; padding: 0 8px; gap: 2px;
+    border-bottom: 1px solid #F0EDE5; background: #FAF8F4;
+  }
+  .parent-tab {
+    flex: 1; padding: 10px 2px; background: none; border: none;
+    font-family: inherit; font-size: 12px; cursor: pointer;
+    border-bottom: 3px solid transparent; color: #888780;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .parent-tab.active { color: #D85A30; border-bottom-color: #D85A30; font-weight: 600; }
+  .parent-content {
+    padding: 14px 18px; overflow-y: auto; flex: 1;
+    -webkit-overflow-scrolling: touch;
+  }
+  .metric-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;
+  }
+  .metric { background: #F8F5F0; border-radius: 10px; padding: 10px 8px; text-align: center; }
+  .metric-label { font-size: 11px; color: #888780; margin: 0 0 3px; }
+  .metric-value { font-size: 19px; font-weight: 600; margin: 0; color: #2C2C2A; }
+  .metric-sub { font-size: 10px; color: #888780; margin: 2px 0 0; }
+  .bar-chart { margin: 8px 0 12px; }
+  .bar-row {
+    display: flex; align-items: center; margin-bottom: 5px; font-size: 11px; gap: 8px;
+  }
+  .bar-label { width: 88px; color: #5F5E5A; flex-shrink: 0; font-size: 11px; }
+  .bar-track {
+    flex: 1; background: #F0EDE5; border-radius: 4px;
+    height: 12px; position: relative; overflow: hidden;
+  }
+  .bar-fill {
+    background: linear-gradient(90deg, #FF8C5A, #FF6B9D);
+    height: 100%; border-radius: 4px; transition: width 0.4s;
+  }
+  .bar-value {
+    width: 56px; text-align: right; color: #2C2C2A;
+    font-weight: 600; font-size: 11px; flex-shrink: 0;
+  }
+  .section-title {
+    font-size: 12px; font-weight: 600; color: #5F4125;
+    margin: 14px 0 6px; padding-bottom: 4px; border-bottom: 1px solid #F0EDE5;
+  }
+  .calendar-grid {
+    display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; margin: 6px 0;
+  }
+  .cal-day {
+    aspect-ratio: 1; border-radius: 4px; background: #F0EDE5;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: #888780; font-weight: 500;
+  }
+  .cal-day.played { background: #FFD9B8; color: #5F4125; }
+  .cal-day.played-perfect { background: #FF8C5A; color: white; }
+  .cal-day.today { box-shadow: 0 0 0 2px #D85A30; }
+  .streak-badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+  .streak-badge {
+    background: #FFF5E8; border: 1px solid #FFB88A; border-radius: 14px;
+    padding: 4px 10px; font-size: 11px; color: #5F4125;
+  }
+  .streak-badge.locked { background: #F8F5F0; border-color: #E8E2D5; color: #B0AFA8; }
+  .next-goal-box {
+    background: #FFF5E8; border-radius: 10px; padding: 11px 14px;
+    font-size: 12px; color: #5F4125; line-height: 1.6;
+  }
+  .mistake-list { font-size: 12px; }
+  .mistake-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 4px; border-bottom: 1px solid #F0EDE5; gap: 8px;
+  }
+  .mistake-text {
+    flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .mistake-count { color: #A32D2D; font-weight: 600; flex-shrink: 0; font-size: 12px; }
+  .legend { font-size: 10px; color: #888780; margin: 6px 0 0; }
+  .empty-msg { color: #888780; font-size: 12px; text-align: center; padding: 24px 8px; }
+
   .pause-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.65);
     display: none; align-items: center; justify-content: center;
@@ -493,8 +605,8 @@
     </div>
 
     <button class="primary-btn" id="start-btn">スタート</button>
-    <div style="text-align:center;"><button id="history-btn" class="link-btn">📊 履歴を見る（パパ・ママ用）</button></div>
-    <div class="version-info">v7.6 · 2026-05-02</div>
+    <div style="text-align:center;"><button id="parent-mode-btn" class="link-btn">🔐 パパ・ママモード</button></div>
+    <div class="version-info">v7.7 · 2026-05-08</div>
   </div>
 
   <!-- クイズ画面 -->
@@ -642,7 +754,48 @@
   </div>
 </div>
 
-  <!-- 履歴オーバーレイ -->
+  <!-- PINロックオーバーレイ（v7.7） -->
+  <div id="pin-overlay" class="pause-overlay">
+    <div class="pause-card pin-card">
+      <h2>🔐 パパ・ママモード</h2>
+      <p style="margin:0 0 4px;font-size:12px;color:#888780;">PIN（4桁）を入力してね</p>
+      <div class="pin-display" id="pin-display"></div>
+      <div class="pin-error" id="pin-error"></div>
+      <div class="pin-keypad" id="pin-keypad">
+        <button class="pin-key" data-pin="1">1</button>
+        <button class="pin-key" data-pin="2">2</button>
+        <button class="pin-key" data-pin="3">3</button>
+        <button class="pin-key" data-pin="4">4</button>
+        <button class="pin-key" data-pin="5">5</button>
+        <button class="pin-key" data-pin="6">6</button>
+        <button class="pin-key" data-pin="7">7</button>
+        <button class="pin-key" data-pin="8">8</button>
+        <button class="pin-key" data-pin="9">9</button>
+        <button class="pin-key cancel" id="pin-cancel-btn">キャンセル</button>
+        <button class="pin-key" data-pin="0">0</button>
+        <button class="pin-key del" id="pin-del-btn">⌫</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- パパ・ママモード ダッシュボード（v7.7） -->
+  <div id="parent-overlay" class="pause-overlay">
+    <div class="pause-card parent-card">
+      <div class="parent-header">
+        <h2>👨‍👩‍👧 パパ・ママ ダッシュボード</h2>
+        <button class="parent-close" id="parent-close-btn" aria-label="閉じる">×</button>
+      </div>
+      <div class="parent-tabs" id="parent-tabs">
+        <button class="parent-tab active" data-tab="savings">💰 貯金</button>
+        <button class="parent-tab" data-tab="analytics">📊 分析</button>
+        <button class="parent-tab" data-tab="history">📋 履歴</button>
+        <button class="parent-tab" data-tab="streak">🔥 モチベ</button>
+      </div>
+      <div class="parent-content" id="parent-content"></div>
+    </div>
+  </div>
+
+  <!-- 履歴オーバーレイ（後方互換のため残す） -->
   <div id="history-overlay" class="pause-overlay">
     <div class="pause-card history-card">
       <h2>📊 履歴</h2>
@@ -2007,10 +2160,321 @@ function end() {
 $('pause-btn').onclick = pauseQuiz;
 $('resume-btn').onclick = resumeQuiz;
 $('reset-btn').onclick = resetToStart;
-$('history-btn').onclick = showHistory;
+// 旧履歴オーバーレイのハンドラ（後方互換）
 $('close-history-btn').onclick = hideHistory;
 $('copy-csv-btn').onclick = copyHistoryCSV;
 $('copy-detail-btn').onclick = copyDetailCSV;
+
+// ========== パパ・ママモード（v7.7） ==========
+const PARENT_PIN = '0504';
+let pinInput = '';
+let parentTab = 'savings';
+
+function showPinPad() {
+  pinInput = '';
+  $('pin-display').textContent = '';
+  $('pin-error').textContent = '';
+  $('pin-overlay').classList.add('active');
+}
+function hidePinPad() {
+  $('pin-overlay').classList.remove('active');
+  pinInput = '';
+  $('pin-display').textContent = '';
+  $('pin-error').textContent = '';
+}
+function pinAddDigit(d) {
+  if (pinInput.length >= 4) return;
+  pinInput += d;
+  $('pin-display').textContent = '●'.repeat(pinInput.length);
+  if (pinInput.length === 4) {
+    setTimeout(checkPin, 120);
+  }
+}
+function pinDelete() {
+  if (pinInput.length === 0) return;
+  pinInput = pinInput.slice(0, -1);
+  $('pin-display').textContent = '●'.repeat(pinInput.length);
+  $('pin-error').textContent = '';
+}
+function checkPin() {
+  if (pinInput === PARENT_PIN) {
+    hidePinPad();
+    showParentDashboard();
+  } else {
+    const card = $('pin-overlay').querySelector('.pause-card');
+    card.classList.add('pin-shake');
+    setTimeout(() => card.classList.remove('pin-shake'), 320);
+    pinInput = '';
+    $('pin-display').textContent = '';
+    $('pin-error').textContent = 'PIN が違うよ';
+  }
+}
+
+function showParentDashboard() {
+  $('parent-overlay').classList.add('active');
+  switchParentTab('savings');
+}
+function hideParentDashboard() {
+  $('parent-overlay').classList.remove('active');
+}
+function switchParentTab(name) {
+  parentTab = name;
+  document.querySelectorAll('.parent-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === name);
+  });
+  const content = $('parent-content');
+  if (name === 'savings') content.innerHTML = renderSavingsTab();
+  else if (name === 'analytics') content.innerHTML = renderAnalyticsTab();
+  else if (name === 'history') { content.innerHTML = renderHistoryTab(); attachParentHistoryButtons(); }
+  else if (name === 'streak') content.innerHTML = renderStreakTab();
+  content.scrollTop = 0;
+}
+
+function _catCss(cat) {
+  const m = { '算数':'b-math', '国語':'b-jp', '漢字':'b-kanji', '理科':'b-sci', '社会':'b-soc', 'ひらめき':'b-think' };
+  return m[cat] || 'b-math';
+}
+function _esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function renderSavingsTab() {
+  const s = loadSavings();
+  const sessions = s.sessions || [];
+  const totalYen = sessions.reduce((a, x) => a + (x.yen || 0), 0);
+  const receivedYen = sessions.filter(x => x.received).reduce((a, x) => a + (x.yen || 0), 0);
+  const pendingYen = totalYen - receivedYen;
+  const monthRemaining = Math.max(0, MONTHLY_LIMIT_YEN - (s.monthEarnedYen || 0));
+  const totalSessions = sessions.length;
+  const uniqueDays = new Set(sessions.map(x => x.date)).size;
+  const monthMap = {};
+  sessions.forEach(sess => {
+    const k = (sess.date || '').slice(0, 7);
+    if (!k) return;
+    monthMap[k] = (monthMap[k] || 0) + (sess.yen || 0);
+  });
+  const months = Object.keys(monthMap).sort().slice(-6);
+  const maxMonth = Math.max(1, ...months.map(m => monthMap[m]));
+
+  let html = '<div class="metric-grid">' +
+    '<div class="metric"><p class="metric-label">累計獲得</p><p class="metric-value">' + totalYen.toLocaleString() + '円</p><p class="metric-sub">' + totalSessions + 'セッション</p></div>' +
+    '<div class="metric"><p class="metric-label">受取済み</p><p class="metric-value">' + receivedYen.toLocaleString() + '円</p></div>' +
+    '<div class="metric"><p class="metric-label">未受取</p><p class="metric-value">' + pendingYen.toLocaleString() + '円</p><p class="metric-sub">貯金箱: ' + pointsToYen(s.pendingPoints).toLocaleString() + '円</p></div>' +
+    '<div class="metric"><p class="metric-label">今月獲得</p><p class="metric-value">' + (s.monthEarnedYen || 0).toLocaleString() + '円</p><p class="metric-sub">あと' + monthRemaining.toLocaleString() + '円</p></div>' +
+  '</div>';
+  html += '<p class="section-title">📅 月別獲得（直近6ヶ月）</p><div class="bar-chart">';
+  if (months.length === 0) {
+    html += '<p class="empty-msg">データがありません</p>';
+  } else {
+    months.forEach(m => {
+      const v = monthMap[m];
+      const pct = (v / maxMonth) * 100;
+      html += '<div class="bar-row"><span class="bar-label">' + m + '</span>' +
+              '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+              '<span class="bar-value">' + v + '円</span></div>';
+    });
+  }
+  html += '</div>';
+  html += '<p class="section-title">📊 サマリー</p>' +
+          '<div class="next-goal-box">' +
+          '・チャレンジした日数：<strong>' + uniqueDays + '日</strong><br>' +
+          '・累計セッション数：<strong>' + totalSessions + '回</strong><br>' +
+          '・1セッション平均：<strong>' + (totalSessions ? Math.round(totalYen / totalSessions) : 0) + '円</strong>' +
+          '</div>';
+  return html;
+}
+
+function renderAnalyticsTab() {
+  const s = loadSavings();
+  const sessions = s.sessions || [];
+  const allQ = [];
+  sessions.forEach(sess => (sess.questions || []).forEach(q => allQ.push(q)));
+  const total = allQ.length;
+  if (total === 0) {
+    return '<p class="empty-msg">まだ問題別データがありません。<br>v7.5以降のセッションでのみ記録されます。</p>';
+  }
+  const correctCnt = allQ.filter(q => q.correct).length;
+  const accuracy = Math.round(correctCnt / total * 100);
+  const avgTime = (allQ.reduce((a, q) => a + (q.timeSec || 0), 0) / total).toFixed(1);
+  const avgHints = (allQ.reduce((a, q) => a + (q.hintCount || 0), 0) / total).toFixed(1);
+
+  const byCat = {};
+  allQ.forEach(q => {
+    const c = q.cat || '不明';
+    if (!byCat[c]) byCat[c] = { total: 0, correct: 0, time: 0 };
+    byCat[c].total++;
+    byCat[c].time += (q.timeSec || 0);
+    if (q.correct) byCat[c].correct++;
+  });
+
+  const mistakeMap = {};
+  allQ.forEach(q => {
+    if (!q.correct) {
+      const key = q.qText || '?';
+      if (!mistakeMap[key]) mistakeMap[key] = { count: 0, cat: q.cat };
+      mistakeMap[key].count++;
+    }
+  });
+  const topMistakes = Object.entries(mistakeMap).sort((a, b) => b[1].count - a[1].count).slice(0, 5);
+
+  const recent = sessions.slice(-10);
+
+  let html = '<div class="metric-grid">' +
+    '<div class="metric"><p class="metric-label">全体正答率</p><p class="metric-value">' + accuracy + '%</p><p class="metric-sub">' + correctCnt + '/' + total + '問</p></div>' +
+    '<div class="metric"><p class="metric-label">記録問題数</p><p class="metric-value">' + total + '</p></div>' +
+    '<div class="metric"><p class="metric-label">平均解答時間</p><p class="metric-value">' + avgTime + '秒</p></div>' +
+    '<div class="metric"><p class="metric-label">平均ヒント数</p><p class="metric-value">' + avgHints + '</p><p class="metric-sub">1問あたり</p></div>' +
+  '</div>';
+
+  html += '<p class="section-title">📚 教科別 正答率</p><div class="bar-chart">';
+  Object.entries(byCat).sort((a, b) => b[1].total - a[1].total).forEach(([cat, st]) => {
+    const acc = Math.round(st.correct / st.total * 100);
+    html += '<div class="bar-row"><span class="bar-label">' + _esc(cat) + ' (' + st.total + ')</span>' +
+            '<div class="bar-track"><div class="bar-fill" style="width:' + acc + '%"></div></div>' +
+            '<span class="bar-value">' + acc + '%</span></div>';
+  });
+  html += '</div>';
+
+  if (recent.length > 0) {
+    html += '<p class="section-title">📈 直近の正答数（最新10セッション）</p><div class="bar-chart">';
+    recent.forEach(sess => {
+      const c = sess.correct || 0;
+      const pct = c * 10;
+      const lbl = (sess.date || '').slice(5) + (sess.timeStr ? ' ' + sess.timeStr : '');
+      html += '<div class="bar-row"><span class="bar-label">' + _esc(lbl) + '</span>' +
+              '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+              '<span class="bar-value">' + c + '/10</span></div>';
+    });
+    html += '</div>';
+  }
+
+  if (topMistakes.length > 0) {
+    html += '<p class="section-title">❌ よく間違える問題 Top 5</p><div class="mistake-list">';
+    topMistakes.forEach(([text, info]) => {
+      const cls = _catCss(info.cat);
+      html += '<div class="mistake-item">' +
+              '<span class="mistake-text"><span class="badge ' + cls + '" style="font-size:10px;margin-right:4px;">' + _esc(info.cat || '') + '</span>' + _esc(text) + '</span>' +
+              '<span class="mistake-count">×' + info.count + '</span>' +
+              '</div>';
+    });
+    html += '</div>';
+  }
+  return html;
+}
+
+function renderHistoryTab() {
+  const s = loadSavings();
+  const sessions = (s.sessions || []).slice();
+  const totalYen = sessions.reduce((a, x) => a + (x.yen || 0), 0);
+  const receivedYen = sessions.filter(x => x.received).reduce((a, x) => a + (x.yen || 0), 0);
+  const pendingYen = totalYen - receivedYen;
+  const uniqueDays = new Set(sessions.map(x => x.date)).size;
+  let html = '<div class="history-stats">' +
+    '📅 ' + uniqueDays + '日チャレンジ達成 ／ 累計 <strong>' + totalYen.toLocaleString() + '円</strong><br>' +
+    '⭕ 受取済み ' + receivedYen.toLocaleString() + '円 ／ ❌ 未受取 ' + pendingYen.toLocaleString() + '円' +
+    '</div>';
+  if (sessions.length === 0) {
+    html += '<div class="history-empty">まだ履歴がありません。</div>';
+  } else {
+    html += '<div style="overflow:auto;max-height:42vh;margin-bottom:12px;">' +
+            '<table class="history-table"><thead><tr>' +
+            '<th>日付</th><th>モード</th><th>点数</th><th>金額</th><th>連続</th><th>正解</th><th>ﾉｰﾋﾝﾄ</th><th>受取</th>' +
+            '</tr></thead><tbody>';
+    sessions.slice().reverse().forEach(r => {
+      const dateCell = _esc(r.date) + (r.timeStr ? '<br><span style="font-size:9px;color:#888780;">' + _esc(r.timeStr) + '</span>' : '');
+      html += '<tr><td>' + dateCell + '</td><td>' + _esc(r.mode) + '</td><td>' + r.points +
+              '</td><td>' + r.yen + '円</td><td>' + (r.streakDay || '-') + '</td><td>' +
+              r.correct + '/10</td><td>' + r.noHint + '/10</td><td>' +
+              (r.received ? '⭕' : '❌') + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+  }
+  html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+          '<button class="resume-btn" id="parent-copy-csv" style="flex:1;padding:12px;font-size:13px;">📋 履歴をコピー</button>' +
+          '<button class="resume-btn" id="parent-copy-detail" style="flex:1;padding:12px;font-size:13px;background:linear-gradient(135deg,#7BA3D9 0%,#5C7FB8 100%);box-shadow:0 4px 14px rgba(92,127,184,0.3);">📋 詳細をコピー</button>' +
+          '</div>';
+  return html;
+}
+function attachParentHistoryButtons() {
+  const c = $('parent-copy-csv'); if (c) c.onclick = copyHistoryCSV;
+  const d = $('parent-copy-detail'); if (d) d.onclick = copyDetailCSV;
+}
+
+function renderStreakTab() {
+  const s = loadSavings();
+  const sessions = s.sessions || [];
+  const cur = s.consecutiveDays || 0;
+  const achieved = s.achievedStreaks || [];
+  const next = getNextStreakGoal(cur);
+  const noHintFull = sessions.filter(x => x.noHint === 10).length;
+  const perfect = sessions.filter(x => x.correct === 10).length;
+  const longest = Math.max(cur, ...(achieved.length ? achieved : [0]));
+
+  const playedDays = {};
+  sessions.forEach(sess => {
+    const d = sess.date;
+    if (!d) return;
+    if (!playedDays[d]) playedDays[d] = { played: true, perfect: false };
+    if (sess.correct === 10) playedDays[d].perfect = true;
+  });
+  const today = todayStr();
+  const cal = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const k = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    cal.push({ date: k, day: d.getDate(), info: playedDays[k], isToday: k === today });
+  }
+
+  let html = '<div class="metric-grid">' +
+    '<div class="metric"><p class="metric-label">🔥 連続日数</p><p class="metric-value">' + cur + '日</p></div>' +
+    '<div class="metric"><p class="metric-label">🏆 最長記録</p><p class="metric-value">' + longest + '日</p></div>' +
+    '<div class="metric"><p class="metric-label">⭐ 満点回数</p><p class="metric-value">' + perfect + '回</p></div>' +
+    '<div class="metric"><p class="metric-label">🎯 ノーヒント満点</p><p class="metric-value">' + noHintFull + '回</p></div>' +
+  '</div>';
+
+  if (next) {
+    html += '<p class="section-title">🎯 次の目標</p>' +
+            '<div class="next-goal-box">' +
+            next.emoji + ' ' + next.label + ' まで <strong>あと ' + (next.days - cur) + '日</strong>（+' + next.pts + '円ボーナス）' +
+            '</div>';
+  } else {
+    html += '<p class="section-title">🎯 次の目標</p>' +
+            '<div class="next-goal-box">全ての連続記録ボーナスを達成！🎉</div>';
+  }
+
+  html += '<p class="section-title">🏅 達成バッジ</p><div class="streak-badges">';
+  STREAK_BONUSES.forEach(b => {
+    const got = achieved.includes(b.days);
+    html += '<span class="streak-badge' + (got ? '' : ' locked') + '">' + b.emoji + ' ' + b.label + (got ? ' ✓' : '') + '</span>';
+  });
+  html += '</div>';
+
+  html += '<p class="section-title">📅 直近30日のプレイ</p><div class="calendar-grid">';
+  cal.forEach(c => {
+    let cls = 'cal-day';
+    if (c.info) cls += c.info.perfect ? ' played-perfect' : ' played';
+    if (c.isToday) cls += ' today';
+    html += '<div class="' + cls + '" title="' + c.date + '">' + c.day + '</div>';
+  });
+  html += '</div>';
+  html += '<p class="legend">🟧 プレイ日 ／ 🟠 満点 ／ ⬜ 未プレイ ／ 太枠 = 今日</p>';
+  return html;
+}
+
+// パパ・ママモード イベント結線
+$('parent-mode-btn').onclick = showPinPad;
+$('parent-close-btn').onclick = hideParentDashboard;
+$('pin-cancel-btn').onclick = hidePinPad;
+$('pin-del-btn').onclick = pinDelete;
+document.querySelectorAll('#pin-keypad .pin-key[data-pin]').forEach(btn => {
+  btn.addEventListener('click', () => pinAddDigit(btn.dataset.pin));
+});
+document.querySelectorAll('.parent-tab').forEach(t => {
+  t.addEventListener('click', () => switchParentTab(t.dataset.tab));
+});
 $('start-btn').onclick = start;
 $('restart-btn').onclick = () => {
   showScreen('start-screen');
