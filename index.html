@@ -257,6 +257,24 @@
     background: #FFE8D6; padding: 2px 8px; border-radius: 6px; margin: 0 2px;
     display: inline-block;
   }
+  .question-text .kanji-target {
+    font-weight: 800; color: #1565A6; background: #E3F0FB;
+    padding: 2px 8px; border-radius: 6px; margin: 0 2px;
+    border-bottom: 3px solid #1565A6; display: inline-block;
+  }
+  .test-instruction {
+    display: block; font-size: 12px; font-weight: 700; margin: 0 0 8px;
+    padding: 4px 10px; border-radius: 8px;
+  }
+  .test-instruction.read { color: #1565A6; background: #E3F0FB; }
+  .test-instruction.write { color: #C2410C; background: #FFE8D6; }
+  .mode-card.test { grid-column: 1 / -1; }
+  .mode-card.test.selected { border-color: #1565A6; background: #E3F0FB; }
+  .judge-note {
+    font-size: 13px; line-height: 1.6; margin: 4px 0 8px; padding: 8px 10px;
+    border-radius: 8px; background: #FFF5E8; color: #5F4125; font-weight: 600;
+  }
+  .judge-note.ok { background: #E1F5EE; color: #085041; }
   .question-text .blank {
     display: inline-block; min-width: 42px; text-align: center;
     border-bottom: 2px solid #D85A30; color: #D85A30; font-weight: 600;
@@ -568,6 +586,11 @@
         <p class="mode-name">漢字特訓</p>
         <p class="mode-desc">書き取り10問</p>
       </div>
+      <div class="mode-card test" data-mode="taishin">
+        <p class="mode-icon">📝</p>
+        <p class="mode-name">漢字 大テスト対策</p>
+        <p class="mode-desc">読み＋書き 100問から毎回10問</p>
+      </div>
     </div>
 
     <div class="bonus-info">
@@ -606,7 +629,7 @@
 
     <button class="primary-btn" id="start-btn">スタート</button>
     <div style="text-align:center;"><button id="parent-mode-btn" class="link-btn">🔐 パパ・ママモード</button></div>
-    <div class="version-info">v7.7 · 2026-05-08</div>
+    <div class="version-info">v7.9 · 2026-06-09</div>
   </div>
 
   <!-- クイズ画面 -->
@@ -685,6 +708,15 @@
       <button class="answer-submit" id="answer-submit">こたえる</button>
     </div>
 
+    <!-- 大テスト対策：読み問題の入力判定 -->
+    <div class="answer-input-row" id="test-read-row" style="display:none;">
+      <input type="text" class="answer-input" id="test-read-input" inputmode="kana" placeholder="読みをひらがなで入力" autocomplete="off">
+      <button class="answer-submit" id="test-read-submit">判定する</button>
+    </div>
+
+    <!-- 大テスト対策：書き問題の手書き自動判定ボタン -->
+    <button class="reveal-btn" id="test-write-judge" style="display:none;">🤖 手書きを判定する</button>
+
     <!-- 漢字：答えを見るボタン -->
     <button class="reveal-btn" id="reveal-btn" style="display:none;">🔍 答えを見る（書けたら押してね）</button>
 
@@ -692,6 +724,7 @@
     <div class="kanji-reveal" id="kanji-reveal">
       <p class="kanji-answer" id="kanji-answer"></p>
       <p class="kanji-reading" id="kanji-reading"></p>
+      <p class="judge-note" id="judge-note" style="display:none;"></p>
       <p class="kanji-check-note">自分の書いた字と正解を見くらべてみよう</p>
       <div class="kanji-check">
         <button class="kanji-btn correct" id="kanji-correct">⭕ 書けた！</button>
@@ -1427,6 +1460,112 @@ const KANJI_BANK = [
   {ex:'「百貨店」の読みは？', ans:'ひゃっかてん', read:'ヒャッカテン', mean:'多くの商品を売る大きな店。デパートのこと。'}
 ];
 
+// ===== 漢字 大テスト対策バンク（読み50・書き50／光村6年I ドリル） =====
+const TEST_BANK = [
+  // --- 読み問題（太字の漢字の読みを答える）---
+  {qType:'read', ex:'主人公の[[視点]]。', ans:'してん', head:'視点', read:'視点（してん）', mean:'ものごとを見る立場。「視」はシ。'},
+  {qType:'read', ex:'[[砂時計]]を見る。', ans:'すなどけい', head:'砂時計', read:'砂時計（すなどけい）', mean:'砂が落ちて時間をはかる道具。「砂」はすな／サ。'},
+  {qType:'read', ex:'[[空腹]]を感じる。', ans:'くうふく', head:'空腹', read:'空腹（くうふく）', mean:'おなかがすくこと。「腹」はフク／はら。'},
+  {qType:'read', ex:'文章の[[段落]]。', ans:'だんらく', head:'段落', read:'段落（だんらく）', mean:'文章のひとまとまり。「段」はダン。'},
+  {qType:'read', ex:'品物を[[並べる]]。', ans:'ならべる', head:'並べる', read:'並べる（ならべる）', mean:'「並」はならべる／ヘイ。'},
+  {qType:'read', ex:'失敗を[[認める]]。', ans:'みとめる', head:'認める', read:'認める（みとめる）', mean:'「認」はみとめる／ニン。'},
+  {qType:'read', ex:'洋服を[[洗う]]。', ans:'あらう', head:'洗う', read:'洗う（あらう）', mean:'「洗」はあらう／セン。'},
+  {qType:'read', ex:'[[異物]]が混じる。', ans:'いぶつ', head:'異物', read:'異物（いぶつ）', mean:'ちがう物。「異」はイ／ことなる。'},
+  {qType:'read', ex:'[[純真]]な心。', ans:'じゅんしん', head:'純真', read:'純真（じゅんしん）', mean:'けがれのない心。「純」はジュン。'},
+  {qType:'read', ex:'光の[[反射]]。', ans:'はんしゃ', head:'反射', read:'反射（はんしゃ）', mean:'はね返ること。「射」はシャ。'},
+  {qType:'read', ex:'広い[[背中]]。', ans:'せなか', head:'背中', read:'背中（せなか）', mean:'「背」はせ／ハイ。'},
+  {qType:'read', ex:'ごみを[[捨てる]]。', ans:'すてる', head:'捨てる', read:'捨てる（すてる）', mean:'「捨」はすてる／シャ。'},
+  {qType:'read', ex:'犬が[[舌]]を出す。', ans:'した', head:'舌', read:'舌（した）', mean:'「舌」はした／ゼツ。'},
+  {qType:'read', ex:'部屋が[[混乱]]する。', ans:'こんらん', head:'混乱', read:'混乱（こんらん）', mean:'みだれること。「乱」はラン／みだれる。'},
+  {qType:'read', ex:'雨が[[降る]]。', ans:'ふる', head:'降る', read:'降る（ふる）', mean:'「降」はふる・おりる／コウ。'},
+  {qType:'read', ex:'川の[[流域]]。', ans:'りゅういき', head:'流域', read:'流域（りゅういき）', mean:'川が流れる地域。「域」はイキ。'},
+  {qType:'read', ex:'[[雑誌]]を読む。', ans:'ざっし', head:'雑誌', read:'雑誌（ざっし）', mean:'「誌」はシ。'},
+  {qType:'read', ex:'美しい[[映像]]。', ans:'えいぞう', head:'映像', read:'映像（えいぞう）', mean:'画面に映る像。「映」はエイ／うつる。'},
+  {qType:'read', ex:'道路を[[拡張]]する。', ans:'かくちょう', head:'拡張', read:'拡張（かくちょう）', mean:'広げること。「拡」はカク。※読みは「かくちょう」（かくだいは拡大）。'},
+  {qType:'read', ex:'博物館に[[展示]]する。', ans:'てんじ', head:'展示', read:'展示（てんじ）', mean:'ならべて見せること。「展」はテン。'},
+  {qType:'read', ex:'絵画を[[所蔵]]する。', ans:'しょぞう', head:'所蔵', read:'所蔵（しょぞう）', mean:'しまって持つこと。「蔵」はゾウ／くら。'},
+  {qType:'read', ex:'会社を[[訪問]]する。', ans:'ほうもん', head:'訪問', read:'訪問（ほうもん）', mean:'たずねること。「訪」はホウ／たずねる。'},
+  {qType:'read', ex:'[[我々]]の意見。', ans:'われわれ', head:'我々', read:'我々（われわれ）', mean:'わたしたち。「我」はわれ／ガ。'},
+  {qType:'read', ex:'申し出を[[承知]]する。', ans:'しょうち', head:'承知', read:'承知（しょうち）', mean:'引き受けること。「承」はショウ。'},
+  {qType:'read', ex:'水が[[蒸発]]する。', ans:'じょうはつ', head:'蒸発', read:'蒸発（じょうはつ）', mean:'気体になること。「蒸」はジョウ／むす。'},
+  {qType:'read', ex:'ごみの[[処理]]。', ans:'しょり', head:'処理', read:'処理（しょり）', mean:'かたづけること。「処」はショ。'},
+  {qType:'read', ex:'銀行に[[就職]]する。', ans:'しゅうしょく', head:'就職', read:'就職（しゅうしょく）', mean:'仕事につくこと。「就」はシュウ／つく。'},
+  {qType:'read', ex:'[[臨時]]の会議。', ans:'りんじ', head:'臨時', read:'臨時（りんじ）', mean:'その時だけのこと。「臨」はリン。'},
+  {qType:'read', ex:'指示に[[従う]]。', ans:'したがう', head:'従う', read:'従う（したがう）', mean:'「従」はしたがう／ジュウ。'},
+  {qType:'read', ex:'命の[[恩人]]。', ans:'おんじん', head:'恩人', read:'恩人（おんじん）', mean:'助けてくれた人。「恩」はオン。'},
+  {qType:'read', ex:'罪を[[裁く]]。', ans:'さばく', head:'裁く', read:'裁く（さばく）', mean:'正しいか判断する。「裁」はさばく／サイ。'},
+  {qType:'read', ex:'[[法律]]を守る。', ans:'ほうりつ', head:'法律', read:'法律（ほうりつ）', mean:'国のきまり。「律」はリツ。'},
+  {qType:'read', ex:'政府の[[首脳]]。', ans:'しゅのう', head:'首脳', read:'首脳（しゅのう）', mean:'中心となる人。「脳」はノウ。'},
+  {qType:'read', ex:'[[内臓]]の検査。', ans:'ないぞう', head:'内臓', read:'内臓（ないぞう）', mean:'体の中の器官。「臓」はゾウ。'},
+  {qType:'read', ex:'大腸と[[小腸]]。', ans:'しょうちょう', head:'小腸', read:'小腸（しょうちょう）', mean:'食べ物を消化する器官。「腸」はチョウ。'},
+  {qType:'read', ex:'[[肺]]の仕組み。', ans:'はい', head:'肺', read:'肺（はい）', mean:'こきゅうの器官。「肺」はハイ。'},
+  {qType:'read', ex:'[[胃薬]]を飲む。', ans:'いぐすり', head:'胃薬', read:'胃薬（いぐすり）', mean:'胃のための薬。「胃」はイ。'},
+  {qType:'read', ex:'[[降水量]]を測る。', ans:'こうすいりょう', head:'降水量', read:'降水量（こうすいりょう）', mean:'降った雨や雪の量。「降」はコウ。'},
+  {qType:'read', ex:'意見が[[異なる]]。', ans:'ことなる', head:'異なる', read:'異なる（ことなる）', mean:'ちがう。「異」はことなる／イ。'},
+  {qType:'read', ex:'[[注射]]をする。', ans:'ちゅうしゃ', head:'注射', read:'注射（ちゅうしゃ）', mean:'薬を体に入れること。「射」はシャ。'},
+  {qType:'read', ex:'[[背比べ]]をする。', ans:'せいくらべ', head:'背比べ', read:'背比べ（せいくらべ）', mean:'背の高さをくらべる。「背」はせい。'},
+  {qType:'read', ex:'[[四捨五入]]の計算。', ans:'ししゃごにゅう', head:'四捨五入', read:'四捨五入（ししゃごにゅう）', mean:'数をまるめる方法。「捨」はシャ。'},
+  {qType:'read', ex:'ボールを[[乱打]]する。', ans:'らんだ', head:'乱打', read:'乱打（らんだ）', mean:'むやみに打つこと。「乱」はラン。'},
+  {qType:'read', ex:'[[地域]]の祭り。', ans:'ちいき', head:'地域', read:'地域（ちいき）', mean:'区切られた土地。「域」はイキ。'},
+  {qType:'read', ex:'[[週刊誌]]の発売日。', ans:'しゅうかんし', head:'週刊誌', read:'週刊誌（しゅうかんし）', mean:'毎週出る雑誌。「誌」はシ。'},
+  {qType:'read', ex:'映画の[[上映]]。', ans:'じょうえい', head:'上映', read:'上映（じょうえい）', mean:'映画を映すこと。「映」はエイ。'},
+  {qType:'read', ex:'[[冷蔵庫]]を開ける。', ans:'れいぞうこ', head:'冷蔵庫', read:'冷蔵庫（れいぞうこ）', mean:'食品を冷やす器具。「蔵」はゾウ。'},
+  {qType:'read', ex:'民話の[[伝承]]。', ans:'でんしょう', head:'伝承', read:'伝承（でんしょう）', mean:'言い伝えること。「承」はショウ。'},
+  {qType:'read', ex:'臨機応変な[[対処]]。', ans:'たいしょ', head:'対処', read:'対処（たいしょ）', mean:'その場に合わせて処理する。「処」はショ。'},
+  {qType:'read', ex:'[[胃腸]]の働き。', ans:'いちょう', head:'胃腸', read:'胃腸（いちょう）', mean:'胃と腸。どちらも消化の器官。'},
+  // --- 書き問題（ひらがなを漢字に直す。送りがなも）---
+  {qType:'write', ex:'しゅじんこうの{{してん}}。', ans:'視点', read:'してん', mean:'視点＝見る立場。「視」はシ。'},
+  {qType:'write', ex:'{{すな}}ぼこりがまう。', ans:'砂', read:'すな／サ', mean:'砂ぼこり＝細かい砂。「砂」はすな／サ。'},
+  {qType:'write', ex:'山の{{ちゅうふく}}。', ans:'中腹', read:'ちゅうふく', mean:'山の途中。「腹」はフク／はら。'},
+  {qType:'write', ex:'長い{{かいだん}}。', ans:'階段', read:'かいだん', mean:'「段」はダン。'},
+  {qType:'write', ex:'一列に{{ならぶ}}。', ans:'並ぶ', read:'ならぶ／ヘイ', mean:'送りがなは「ぶ」。「並」はならぶ。'},
+  {qType:'write', ex:'人かげを{{みとめる}}。', ans:'認める', read:'みとめる／ニン', mean:'送りがなは「める」。'},
+  {qType:'write', ex:'てを{{あらう}}。', ans:'洗う', read:'あらう／セン', mean:'送りがなは「う」。'},
+  {qType:'write', ex:'{{いぶつ}}が混じる。', ans:'異物', read:'いぶつ', mean:'ちがう物。「異」はイ／ことなる。'},
+  {qType:'write', ex:'{{たんじゅん}}な仕組み。', ans:'単純', read:'たんじゅん', mean:'かんたんなこと。「純」はジュン。'},
+  {qType:'write', ex:'ロケットの{{はっしゃ}}。', ans:'発射', read:'はっしゃ', mean:'うち出すこと。「射」はシャ。'},
+  {qType:'write', ex:'{{はいご}}に注意する。', ans:'背後', read:'はいご', mean:'うしろ。「背」はハイ／せ。'},
+  {qType:'write', ex:'まよいを{{すてる}}。', ans:'捨てる', read:'すてる／シャ', mean:'送りがなは「てる」。'},
+  {qType:'write', ex:'ねこ{{じた}}。', ans:'舌', read:'した／ゼツ', mean:'猫舌＝熱い物が苦手なこと。「舌」はした。'},
+  {qType:'write', ex:'れつが{{みだれる}}。', ans:'乱れる', read:'みだれる／ラン', mean:'送りがなは「れる」。'},
+  {qType:'write', ex:'にわかあめが{{ふる}}。', ans:'降る', read:'ふる／コウ', mean:'送りがなは「る」。「降」はふる・おりる。'},
+  {qType:'write', ex:'{{くいき}}を分ける。', ans:'区域', read:'くいき', mean:'区切られた範囲。「域」はイキ。'},
+  {qType:'write', ex:'がっきゅうにっ{{し}}。', ans:'誌', read:'シ', mean:'学級日誌の「誌」。記録の書物。'},
+  {qType:'write', ex:'かがみに{{うつる}}。', ans:'映る', read:'うつる／エイ', mean:'送りがなは「る」。'},
+  {qType:'write', ex:'しゃしんを{{かくだい}}する。', ans:'拡大', read:'かくだい', mean:'大きくすること。「拡」はカク。'},
+  {qType:'write', ex:'さくひんの{{てんじ}}。', ans:'展示', read:'てんじ', mean:'ならべて見せる。「展」はテン。'},
+  {qType:'write', ex:'こめを{{ちょぞう}}する。', ans:'貯蔵', read:'ちょぞう', mean:'ためてしまう。「蔵」はゾウ。'},
+  {qType:'write', ex:'ぼこうを{{たずねる}}。', ans:'訪ねる', read:'たずねる／ホウ', mean:'送りがなは「ねる」。母校＝出た学校。'},
+  {qType:'write', ex:'{{われわれ}}のようきゅう。', ans:'我々', read:'われわれ', mean:'わたしたち。「我」はわれ／ガ。'},
+  {qType:'write', ex:'{{しょうにん}}する。', ans:'承認', read:'しょうにん', mean:'認めること。「承」はショウ。'},
+  {qType:'write', ex:'{{じょうき}}きかんしゃ。', ans:'蒸気', read:'じょうき', mean:'水が気体になったもの。「蒸」はジョウ。'},
+  {qType:'write', ex:'ごみの{{しょぶん}}。', ans:'処分', read:'しょぶん', mean:'かたづけること。「処」はショ。'},
+  {qType:'write', ex:'{{しゅうしょく}}活動。', ans:'就職', read:'しゅうしょく', mean:'仕事につくこと。「就」はシュウ。'},
+  {qType:'write', ex:'{{りんかい}}がっこう。', ans:'臨海', read:'りんかい', mean:'海に面したところ。「臨」はリン。'},
+  {qType:'write', ex:'{{じゅうらい}}どおり。', ans:'従来', read:'じゅうらい', mean:'今まで通り。「従」はジュウ。'},
+  {qType:'write', ex:'命の{{おん}}じん。', ans:'恩', read:'オン', mean:'恩人＝助けてくれた人。「恩」はオン。'},
+  {qType:'write', ex:'{{さいばんかん}}の仕事。', ans:'裁判官', read:'さいばんかん', mean:'罪を裁く人。「裁」はサイ。'},
+  {qType:'write', ex:'{{きりつ}}を守る。', ans:'規律', read:'きりつ', mean:'きまり。「律」はリツ。'},
+  {qType:'write', ex:'{{だいのう}}と小脳。', ans:'大脳', read:'だいのう', mean:'脳の大きな部分。「脳」はノウ。'},
+  {qType:'write', ex:'{{しんぞう}}の音。', ans:'心臓', read:'しんぞう', mean:'血をおくる器官。「臓」はゾウ。'},
+  {qType:'write', ex:'{{ちょう}}の検査。', ans:'腸', read:'チョウ', mean:'食べ物を消化する器官。「腸」はチョウ。'},
+  {qType:'write', ex:'{{はい}}活量。', ans:'肺', read:'ハイ', mean:'肺活量＝肺に入る空気の量。「肺」はハイ。'},
+  {qType:'write', ex:'{{い}}の検査。', ans:'胃', read:'イ', mean:'食べ物を消化する器官。「胃」はイ。'},
+  {qType:'write', ex:'バスを{{おりる}}。', ans:'降りる', read:'おりる／コウ', mean:'送りがなは「りる」。「降」はおりる・ふる。'},
+  {qType:'write', ex:'意見が{{ことなる}}。', ans:'異なる', read:'ことなる／イ', mean:'送りがなは「なる」。ちがうこと。'},
+  {qType:'write', ex:'{{せいじゅん}}な心。', ans:'清純', read:'せいじゅん', mean:'きよらかなこと。「純」はジュン。'},
+  {qType:'write', ex:'{{しゃてき}}で遊ぶ。', ans:'射的', read:'しゃてき', mean:'まとを当てる遊び。「射」はシャ。'},
+  {qType:'write', ex:'{{せいくらべ}}をする。', ans:'背比べ', read:'せいくらべ', mean:'背の高さくらべ。「背」はせい。'},
+  {qType:'write', ex:'{{すていし}}になる。', ans:'捨て石', read:'すていし', mean:'将来のために役立つ犠牲。「捨」はシャ。'},
+  {qType:'write', ex:'{{したさき}}の言葉。', ans:'舌先', read:'したさき', mean:'舌の先。口先だけの言葉。「舌」はした。'},
+  {qType:'write', ex:'{{らんざつ}}な部屋。', ans:'乱雑', read:'らんざつ', mean:'ちらかっていること。「乱」はラン。'},
+  {qType:'write', ex:'{{おんいき}}が広い。', ans:'音域', read:'おんいき', mean:'出せる音の範囲。「域」はイキ。'},
+  {qType:'write', ex:'{{どぞう}}の中。', ans:'土蔵', read:'どぞう', mean:'物をしまう蔵。「蔵」はゾウ／くら。'},
+  {qType:'write', ex:'おうきゅう{{しょち}}。', ans:'処置', read:'しょち', mean:'手当て。応急処置。「処」はショ。'},
+  {qType:'write', ex:'{{ようさい}}が趣味。', ans:'洋裁', read:'ようさい', mean:'洋服をぬうこと。「裁」はサイ。'},
+  {qType:'write', ex:'{{いちょうやく}}を飲む。', ans:'胃腸薬', read:'いちょうやく', mean:'胃と腸の薬。'}
+];
+
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -1713,6 +1852,9 @@ document.querySelectorAll('.mode-card').forEach(card => {
     if (mode === 'kanji') {
       $('subject-title').textContent = '漢字書き取り（くもんドリルから）';
       $('mode-badges').innerHTML = '<span class="badge b-kanji">5年生の漢字</span><span class="badge" style="background:#F0EDE5;color:#5F5E5A;">書き取り練習</span>';
+    } else if (mode === 'taishin') {
+      $('subject-title').textContent = '漢字 大テスト対策（光村6年I・100問から)';
+      $('mode-badges').innerHTML = '<span class="badge" style="background:#E3F0FB;color:#1565A6;">読み 50問</span><span class="badge b-kanji">書き 50問</span>';
     } else {
       $('subject-title').textContent = '今日の教科（5年生までの内容）';
       $('mode-badges').innerHTML = '<span class="badge b-math">算数</span><span class="badge b-jp">国語</span><span class="badge b-sci">理科</span><span class="badge b-soc">社会</span>';
@@ -1723,6 +1865,8 @@ document.querySelectorAll('.mode-card').forEach(card => {
 function start() {
   if (mode === 'kanji') {
     questions = shuffle(KANJI_BANK).slice(0, TOTAL);
+  } else if (mode === 'taishin') {
+    questions = shuffle(TEST_BANK).slice(0, TOTAL);
   } else {
     const byCat = {};
     MIX_BANK.forEach(q => {
@@ -1760,7 +1904,7 @@ function show() {
   const q = questions[idx];
   $('q-num').textContent = (idx + 1) + ' / ' + TOTAL;
 
-  if (mode === 'kanji') {
+  if (mode === 'kanji' || mode === 'taishin') {
     showKanji(q);
   } else {
     showMix(q);
@@ -1792,6 +1936,9 @@ function showMix(q) {
   // 選択式 or 入力式で切替
   $('reveal-btn').style.display = 'none';
   $('kanji-reveal').style.display = 'none';
+  $('test-read-row').style.display = 'none';
+  $('test-write-judge').style.display = 'none';
+  $('judge-note').style.display = 'none';
 
   if (q.type === 'input') {
     $('choices').style.display = 'none';
@@ -1817,12 +1964,33 @@ function showMix(q) {
 
 function showKanji(q) {
   const catEl = $('category');
-  catEl.textContent = '漢字';
-  catEl.className = 'badge b-kanji';
-  $('canvas-title').textContent = '✏️ ここに漢字を書こう';
+  const isRead = (mode === 'taishin' && q.qType === 'read');
 
-  const html = q.ex.replace(/\{\{(.+?)\}\}/g, '<span class="hiragana">$1</span>');
+  if (mode === 'taishin') {
+    catEl.textContent = isRead ? '読み' : '書き';
+  } else {
+    catEl.textContent = '漢字';
+  }
+  catEl.className = 'badge b-kanji';
+  $('canvas-title').textContent = isRead ? '✏️ メモ（読みを考えよう）' : '✏️ ここに漢字を書こう';
+
+  let html = q.ex
+    .replace(/\{\{(.+?)\}\}/g, '<span class="hiragana">$1</span>')
+    .replace(/\[\[(.+?)\]\]/g, '<span class="kanji-target">$1</span>');
+  if (mode === 'taishin') {
+    const tag = isRead
+      ? '<span class="test-instruction read">🔵 読み問題：太字の漢字の読みは？</span>'
+      : '<span class="test-instruction write">🟠 書き問題：ひらがなを漢字に直そう（送りがなも）</span>';
+    html = tag + html;
+  }
   $('question').innerHTML = html;
+
+  // 自己採点ボタンの文言（読み/書きで切替）
+  $('kanji-correct').textContent = isRead ? '⭕ 読めた！' : '⭕ 書けた！';
+  $('reveal-btn').textContent = isRead ? '🔍 答えを見る（読めたら押してね）' : '🔍 答えを見る（書けたら押してね）';
+  $('kanji-reveal').querySelector('.kanji-check-note').textContent = isRead
+    ? '自分の読みと正解を見くらべてみよう'
+    : '自分の書いた字と正解を見くらべてみよう';
 
   // 漢字モードはくまさんヒントは使わず、答えを見る方式
   $('bear-area').style.display = 'none';
@@ -1830,13 +1998,35 @@ function showKanji(q) {
 
   $('choices').style.display = 'none';
   $('input-row').style.display = 'none';
-  $('reveal-btn').style.display = 'block';
-  $('reveal-btn').disabled = false;
   $('kanji-reveal').style.display = 'none';
+  $('judge-note').style.display = 'none';
   $('kanji-correct').disabled = false;
   $('kanji-wrong').disabled = false;
   $('kanji-correct').style.opacity = '1';
   $('kanji-wrong').style.opacity = '1';
+
+  // 出題タイプごとの操作ボタン切替
+  $('reveal-btn').style.display = 'none';
+  $('reveal-btn').disabled = false;
+  $('test-read-row').style.display = 'none';
+  $('test-write-judge').style.display = 'none';
+  $('test-write-judge').disabled = false;
+  $('test-write-judge').textContent = '🤖 手書きを判定する';
+
+  if (mode === 'taishin' && isRead) {
+    // 読み問題：ひらがな入力で自動採点
+    $('test-read-input').value = '';
+    $('test-read-input').disabled = false;
+    $('test-read-submit').disabled = false;
+    $('test-read-row').style.display = 'flex';
+    setTimeout(() => { try { $('test-read-input').focus(); } catch(e){} }, 100);
+  } else if (mode === 'taishin' && !isRead) {
+    // 書き問題：手書きをGoogle認識で自動採点
+    $('test-write-judge').style.display = 'block';
+  } else {
+    // 通常の漢字モード：答えを見る→自己採点
+    $('reveal-btn').style.display = 'block';
+  }
 }
 
 // くまさんヒント（段階的に詳しくなる）
@@ -1968,13 +2158,119 @@ kanjiAnswer = function(ok) {
   trackQuestion(q, 'kanji', ok, 0, score - __pre);
 };
 
-// 漢字モードの答えを見る
-$('reveal-btn').onclick = () => {
+// 答え表示（自己採点・自動採点の共通ヘルパー）
+function revealAnswer() {
   const q = questions[idx];
   $('kanji-answer').textContent = q.ans;
   $('kanji-reading').innerHTML = '<span class="label">読み方</span>' + q.read;
   $('kanji-reveal').style.display = 'block';
   $('reveal-btn').style.display = 'none';
+  $('test-write-judge').style.display = 'none';
+  $('test-read-row').style.display = 'none';
+}
+function setJudgeNote(msg, ok) {
+  const el = $('judge-note');
+  el.textContent = msg;
+  el.className = 'judge-note' + (ok ? ' ok' : '');
+  el.style.display = 'block';
+}
+
+// 漢字モードの答えを見る
+$('reveal-btn').onclick = () => { revealAnswer(); };
+
+// ===== 大テスト対策：読み問題の自動採点（ひらがな入力） =====
+function normKana(s) {
+  return (s || '').trim()
+    .replace(/[\s。、，．・]/g, '')
+    .replace(/[ァ-ヴ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)); // カタカナ→ひらがな
+}
+function submitReadAnswer() {
+  if (answered) return;
+  const q = questions[idx];
+  const raw = $('test-read-input').value.trim();
+  const got = normKana(raw);
+  const ans = normKana(q.ans);
+  revealAnswer();
+  if (got && got === ans) {
+    setJudgeNote('🤖 自動判定：正解！　入力「' + raw + '」', true);
+    kanjiAnswer(true);
+  } else {
+    setJudgeNote('入力「' + (raw || '（なし）') + '」　→　正解は「' + q.ans + '」。タイプミスや別の読みなら、自分で○×を選んでね。', false);
+    // kanji-reveal の ⭕/❌ ボタンで自己採点（フォールバック）
+  }
+}
+$('test-read-submit').onclick = submitReadAnswer;
+$('test-read-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); submitReadAnswer(); }
+});
+
+// ===== 大テスト対策：書き問題の自動採点（Google手書き認識） =====
+// inputtools エンドポイント（handwriting.js と同じ・CORS対応）
+async function recognizeHandwriting() {
+  if (!inkStrokes.length) return null; // 何も書いていない
+  const rect = canvas.getBoundingClientRect();
+  const body = {
+    options: 'enable_pre_space',
+    requests: [{
+      writing_guide: { writing_area_width: rect.width, writing_area_height: rect.height },
+      ink: inkStrokes,
+      language: 'ja'
+    }]
+  };
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), 7000);
+  try {
+    const res = await fetch('https://www.google.com/inputtools/request?ime=handwriting&app=mobilesearch&cs=1&oe=UTF-8', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: ctrl.signal
+    });
+    const data = await res.json();
+    if (data[0] !== 'SUCCESS' || !data[1] || !data[1][0]) return [];
+    return data[1][0][1] || []; // 候補配列
+  } finally {
+    clearTimeout(to);
+  }
+}
+function judgeWriting(cands, ans) {
+  const norm = s => (s || '').replace(/\s/g, '');
+  const A = norm(ans);
+  const top = cands.map(norm);
+  if (top.includes(A)) return { ok: true, matched: A };
+  // 送りがなを省いて書いた場合（漢字部分だけ一致）
+  const core = A.replace(/[ぁ-ん]+$/, '');
+  if (core && core !== A && top.includes(core)) return { ok: true, partial: true, matched: core };
+  return { ok: false, cands: top.filter(Boolean).slice(0, 4) };
+}
+$('test-write-judge').onclick = async () => {
+  if (answered) return;
+  const q = questions[idx];
+  const hadInk = inkStrokes.length > 0;
+  $('test-write-judge').disabled = true;
+  $('test-write-judge').textContent = '🤖 認識中…';
+  let cands = null, errored = false;
+  try { cands = await recognizeHandwriting(); }
+  catch (e) { errored = true; }
+  revealAnswer();
+  if (!hadInk || cands === null) {
+    setJudgeNote('まだ何も書かれていないみたい。書いてから判定するか、自分で○×を選んでね。', false);
+    return;
+  }
+  if (errored) {
+    setJudgeNote('🤖 ネットにつながらず自動判定できなかったよ。正解は「' + q.ans + '」。自分で○×を選んでね。', false);
+    return;
+  }
+  const j = judgeWriting(cands, q.ans);
+  if (j.ok && !j.partial) {
+    setJudgeNote('🤖 自動判定：正解！　認識「' + j.matched + '」', true);
+    kanjiAnswer(true);
+  } else if (j.ok && j.partial) {
+    setJudgeNote('🤖 漢字は合ってる！（認識「' + j.matched + '」）正解は「' + q.ans + '」。送りがなまで合ってたか確認して、自分で○×を選んでね。', false);
+  } else {
+    const got = j.cands.length ? '「' + j.cands.join('／') + '」' : '（読み取れず）';
+    setJudgeNote('🤖 認識：' + got + '　→　正解は「' + q.ans + '」。合っていたか、自分で○×を選んでね。', false);
+  }
 };
 
 $('kanji-correct').onclick = () => kanjiAnswer(true);
@@ -1984,6 +2280,9 @@ function kanjiAnswer(ok) {
   if (answered) return;
   answered = true;
   const q = questions[idx];
+  const isRead = (mode === 'taishin' && q.qType === 'read');
+  const verb = isRead ? '読めた' : '書けた';
+  const headWord = q.head || q.ans;
   $('kanji-correct').disabled = true;
   $('kanji-wrong').disabled = true;
   $('kanji-correct').style.opacity = ok ? '1' : '0.4';
@@ -2000,16 +2299,18 @@ function kanjiAnswer(ok) {
     noHintCount++;
     fb.className = 'feedback fb-correct';
     fb.innerHTML = streak >= 3
-      ? '🎉 <strong>書けたね！</strong> +' + pts + '点（' + streak + '連続）'
-      : '✨ <strong>書けたね！</strong> +' + pts + '点';
+      ? '🎉 <strong>' + verb + 'ね！</strong> +' + pts + '点（' + streak + '連続）'
+      : '✨ <strong>' + verb + 'ね！</strong> +' + pts + '点';
   } else {
     streak = 0;
     fb.className = 'feedback fb-wrong';
-    fb.innerHTML = '💭 <strong>書けなかった漢字こそ、覚えるチャンス</strong>';
+    fb.innerHTML = isRead
+      ? '💭 <strong>読めなかった漢字こそ、覚えるチャンス</strong>'
+      : '💭 <strong>書けなかった漢字こそ、覚えるチャンス</strong>';
   }
   fb.style.display = 'block';
 
-  $('explanation').innerHTML = '<h4>📖 ' + q.ans + ' について</h4><p style="margin:0 0 8px;">' + q.mean + '</p><div class="tip">💡 声に出して読みながら、もう1回書いてみると記憶に残るよ。</div>';
+  $('explanation').innerHTML = '<h4>📖 ' + headWord + ' について</h4><p style="margin:0 0 8px;">' + q.mean + '</p><div class="tip">💡 声に出して読みながら、もう1回書いてみると記憶に残るよ。</div>';
   $('explanation').style.display = 'block';
 
   $('next-btn').textContent = idx === TOTAL - 1 ? '結果を見る →' : 'つぎの問題へ →';
@@ -2100,7 +2401,7 @@ function end() {
   savings.sessions.push({
     date: today,
     timeStr: __timeStr,
-    mode: mode === 'kanji' ? '漢字' : 'ミックス',
+    mode: mode === 'kanji' ? '漢字' : (mode === 'taishin' ? '漢字大テスト対策' : 'ミックス'),
     points: totalEarnedPoints,
     yen: cappedYen,
     streakDay: savings.consecutiveDays,
@@ -2249,6 +2550,7 @@ function renderSavingsTab() {
   const monthRemaining = Math.max(0, MONTHLY_LIMIT_YEN - (s.monthEarnedYen || 0));
   const totalSessions = sessions.length;
   const uniqueDays = new Set(sessions.map(x => x.date)).size;
+  // 月別獲得（直近6ヶ月）
   const monthMap = {};
   sessions.forEach(sess => {
     const k = (sess.date || '').slice(0, 7);
@@ -2300,6 +2602,7 @@ function renderAnalyticsTab() {
   const avgTime = (allQ.reduce((a, q) => a + (q.timeSec || 0), 0) / total).toFixed(1);
   const avgHints = (allQ.reduce((a, q) => a + (q.hintCount || 0), 0) / total).toFixed(1);
 
+  // 教科別
   const byCat = {};
   allQ.forEach(q => {
     const c = q.cat || '不明';
@@ -2309,6 +2612,7 @@ function renderAnalyticsTab() {
     if (q.correct) byCat[c].correct++;
   });
 
+  // よく間違える問題
   const mistakeMap = {};
   allQ.forEach(q => {
     if (!q.correct) {
@@ -2319,6 +2623,7 @@ function renderAnalyticsTab() {
   });
   const topMistakes = Object.entries(mistakeMap).sort((a, b) => b[1].count - a[1].count).slice(0, 5);
 
+  // 直近10セッションの正答数推移
   const recent = sessions.slice(-10);
 
   let html = '<div class="metric-grid">' +
@@ -2412,6 +2717,7 @@ function renderStreakTab() {
   const perfect = sessions.filter(x => x.correct === 10).length;
   const longest = Math.max(cur, ...(achieved.length ? achieved : [0]));
 
+  // カレンダー（直近30日）
   const playedDays = {};
   sessions.forEach(sess => {
     const d = sess.date;
@@ -2527,6 +2833,9 @@ let drawing = false;
 let currentColor = '#2C2C2A';
 let currentTool = 'pen';
 let lastX = 0, lastY = 0;
+// 手書き認識用：ストローク記録（[[xs],[ys],[ts]] の配列）
+let inkStrokes = [];
+let curStroke = null;
 
 function resizeCanvas() {
   const dpr = window.devicePixelRatio || 1;
@@ -2564,6 +2873,11 @@ function startDraw(e) {
   applyToolStyle();
   const p = getPos(e);
   lastX = p.x; lastY = p.y;
+  if (currentTool !== 'eraser') {
+    curStroke = [[p.x], [p.y], [Math.round(performance.now())]];
+  } else {
+    curStroke = null;
+  }
 }
 
 function draw(e) {
@@ -2575,11 +2889,18 @@ function draw(e) {
   ctx.lineTo(p.x, p.y);
   ctx.stroke();
   lastX = p.x; lastY = p.y;
+  if (currentTool !== 'eraser' && curStroke) {
+    curStroke[0].push(p.x);
+    curStroke[1].push(p.y);
+    curStroke[2].push(Math.round(performance.now()));
+  }
 }
 
 function endDraw(e) {
   if (e) e.preventDefault();
   drawing = false;
+  if (curStroke && curStroke[0].length) inkStrokes.push(curStroke);
+  curStroke = null;
 }
 
 canvas.addEventListener('mousedown', startDraw);
@@ -2612,6 +2933,8 @@ function clearCanvas() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.restore();
+  inkStrokes = [];
+  curStroke = null;
 }
 $('clear-btn').addEventListener('click', clearCanvas);
 
