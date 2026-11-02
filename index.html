@@ -552,6 +552,8 @@
   }
   .modal-btn.primary { background: #2C2C2A; color: white; }
   .modal-btn.cancel { background: #F0EDE5; color: #5F5E5A; }
+  .modal-btn.danger { background: #D85A30; color: white; }
+  #quit-overlay { z-index: 1100; }
 
   /* 結果画面：今回の収入表示 */
   .earnings-card {
@@ -666,7 +668,7 @@
     <button class="primary-btn" id="start-btn">スタート</button>
     <p id="scan175-storage-note" role="status" class="scan175-note"></p>
     <div style="text-align:center;"><button id="parent-mode-btn" class="link-btn">🔐 パパ・ママモード</button></div>
-    <div class="version-info">v7.11 · 漢字175問対応</div>
+    <div class="version-info">v7.12 · 2026-11-02</div>
   </div>
 
   <!-- クイズ画面 -->
@@ -886,6 +888,19 @@
       <h2>⏸ 一時停止中</h2>
       <p>準備ができたら再開してね</p>
       <button class="resume-btn" id="resume-btn">▶ 再開する</button>
+    </div>
+  </div>
+
+  <!-- やめる確認モーダル（v7.12） -->
+  <div class="modal-overlay" id="quit-overlay">
+    <div class="modal-card">
+      <div class="modal-icon">🏠</div>
+      <h2 class="modal-title">トップ画面に戻る？</h2>
+      <div class="modal-detail">今回のとちゅうの答えは消えるよ。<br>貯めたおこづかいは消えないから安心してね。</div>
+      <div class="modal-actions">
+        <button class="modal-btn cancel" id="quit-cancel">つづける</button>
+        <button class="modal-btn danger" id="quit-confirm">トップに戻る</button>
+      </div>
     </div>
   </div>
 
@@ -1871,9 +1886,24 @@ function resumeQuiz() {
   if (!timer) timer = setInterval(tickTimer, 1000);
 }
 
+// v7.12：やめる確認をアプリ内の画面に。確認中はタイマーを止め、「つづける」で再開
+let quitWasTicking = false;
 function resetToStart() {
-  const ok = confirm('本当にトップ画面に戻りますか？\n今までの解答はすべて破棄されます。');
-  if (!ok) return;
+  if (!$('quiz-screen').classList.contains('active')) return;
+  quitWasTicking = !!timer;
+  if (timer) { clearInterval(timer); timer = null; }
+  $('quit-overlay').classList.add('active');
+}
+function cancelQuit() {
+  $('quit-overlay').classList.remove('active');
+  if (quitWasTicking && !timer && !$('pause-overlay').classList.contains('active')) {
+    timer = setInterval(tickTimer, 1000);
+  }
+  quitWasTicking = false;
+}
+function confirmQuit() {
+  $('quit-overlay').classList.remove('active');
+  quitWasTicking = false;
   if (mode === 'scan175') closeScanSession(true);
   if (timer) { clearInterval(timer); timer = null; }
   $('pause-overlay').classList.remove('active');
@@ -2582,6 +2612,8 @@ function end() {
 $('pause-btn').onclick = pauseQuiz;
 $('resume-btn').onclick = resumeQuiz;
 $('reset-btn').onclick = resetToStart;
+$('quit-cancel').onclick = cancelQuit;
+$('quit-confirm').onclick = confirmQuit;
 // 旧履歴オーバーレイのハンドラ（後方互換）
 $('close-history-btn').onclick = hideHistory;
 $('copy-csv-btn').onclick = copyHistoryCSV;
@@ -3157,6 +3189,13 @@ $('scan175-save-exit').onclick=()=>{saveScanSession();if(timer){clearInterval(ti
 document.querySelectorAll('.mode-card').forEach(c=>{c.setAttribute('role','button');c.setAttribute('tabindex','0');c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();c.click();}});});
 window.addEventListener('pagehide',saveScanSession);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)saveScanSession();});
+// v7.12：iPadのスリープ・アプリ切替でタイマーを自動で一時停止
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden)return;
+ if(!$('quiz-screen').classList.contains('active')||!timer)return;
+ if($('pause-overlay').classList.contains('active')||$('quit-overlay').classList.contains('active'))return;
+ pauseQuiz();
+});
 document.addEventListener('click',e=>{if(e.target.closest('#kanji-correct,#kanji-wrong,#next-btn,#reveal-btn,#eraser-btn,.color-swatch'))saveScanSession();});
 $('subject-title').textContent='今回のスキャン教材・書き取り175問';
 $('mode-badges').innerHTML='<span class="badge b-kanji">書き取り175問</span><span class="badge b-jp">自己採点</span>';
